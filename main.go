@@ -24,6 +24,7 @@ func main() {
 	mux := http.NewServeMux()
 
     var domainCtl = ctl.DomainController{}
+	mux.HandleFunc("/", domainCtl.List)
 	mux.HandleFunc("/domains", domainCtl.List)
 
 	

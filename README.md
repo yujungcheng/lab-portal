@@ -6,7 +6,7 @@ OS: ubuntu22.04
 Go version: go1.18.1
 
 
-#### initial project dir and install go libvirt
+#### Initial project dir and install go libvirt
 ```
 $ mkdir lab-portal; cd lab-portal
 $ go mod init lab-portal
@@ -30,8 +30,12 @@ $ go get libvirt.org/libvirt-go-xml
 $ go install libvirt.org/libvirt-go-xml
 ```
 
+#### Run
+```
+$ go run main.go
+```
 
-#### reference
+#### Reference
 ```
 https://go.dev/doc/gopath_code  
 https://go.dev/ref/mod  

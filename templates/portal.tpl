@@ -106,7 +106,7 @@
 
         <div class="dropdown">
             <button class="dropbtn">
-                <a href="/domains">Domain</a>
+                <a href="/domains">Domains</a>
             </button> |
             <div class="dropdown-content">
                 <a href="/domains/create">[ Create New ]</a>
