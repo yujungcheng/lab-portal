@@ -16,6 +16,8 @@
         <th>Actions</th>
     </tr>
 
+    <!-- todo: able to switch multi-line format to show disks and interfaces-->
+
     {{ range .Domains }}
     <tr>
         <td>{{ .Name }}</td>
@@ -27,15 +29,13 @@
         <td>{{ .MemoryStr }}</td>
 
         <td>
-            {{ range $index, $element := .Disks }}
-                {{ if $index }}<br/>{{end}}
-                {{ $element }}
+            {{ range $key, $value := .Disks }}
+                {{ $key }}({{ $value }})
             {{ end }}
         </td>
         <td>
-            {{ range $index, $element := .Interfaces }}
-                {{ if $index }}<br/>{{end}}
-                {{ $element }}
+            {{ range $key, $value := .Interfaces }}
+                {{ $key }}({{ $value }})
             {{ end }}
         </td>
 

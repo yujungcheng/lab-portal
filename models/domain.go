@@ -1,10 +1,11 @@
 package models
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"libvirt.org/go/libvirt"
-	//"libvirt.org/go/libvirtxml"
+	"libvirt.org/go/libvirtxml"
 )
 
 type Domain struct {
@@ -89,21 +90,57 @@ func GetAllDomains(flag string) []Domain {
 			d.Name, _ = domain.GetName()
 			d.UUID, _  = domain.GetUUIDString()
 			d.MaxMem = info.MaxMem
-			d.MaxMemStr = ConvertSizeToString(info.MaxMem*1024, "MB")
+			d.MaxMemStr = ConvertSizeToString(info.MaxMem*1024, "GB")
 			d.Memory = info.Memory
-			d.MemoryStr = ConvertSizeToString(info.Memory*1024, "MB")
+			d.MemoryStr = ConvertSizeToString(info.Memory*1024, "GB")
 			d.Vcpu = info.NrVirtCpu
 			d.CpuTime = info.CpuTime
 			d.State = int(info.State)  // libvirt.DomainState
 			d.StateStr = GetDomainStateStr(info.State)
 			if info.State == 1 || info.State == 3 {
-				id, err := domain.GetID()
-				if err == nil {
-					d.ID = id
-				} else {
-					log.Printf("Error: fail to get domain ID")
+				d.ID, _ = domain.GetID()
+			}
+
+			domainxml, _ := domain.GetXMLDesc(0)
+			domaincfg := &libvirtxml.Domain{}
+			_ = domaincfg.Unmarshal(domainxml)
+
+			var disks = map[string]string{}
+			for _, disk := range domaincfg.Devices.Disks {
+				if disk.Device == "disk" {
+					blockInfo, err := domain.GetBlockInfo(disk.Target.Dev, 0)
+					if err != nil {
+						log.Printf("Error: fail to get disk %s capacity", disk.Target.Dev)
+						disks[disk.Target.Dev] = "?"
+					} else {
+						disks[disk.Target.Dev] = ConvertSizeToString(blockInfo.Capacity, "GB")
+					}
 				}
 			}
+			d.Disks = disks
+
+			var intfType, intfTypeNmae, intfTargetDev string
+			var intfs = map[string]string{}  // todo: array of map to involve more details and keep item order.
+			for _, intf := range domaincfg.Devices.Interfaces {
+				if intf.Source.Network != nil {
+					intfType = "N"
+					intfTypeNmae = intf.Source.Network.Network
+				} else if intf.Source.Bridge != nil {
+					intfType = "B"
+					intfTypeNmae = intf.Source.Bridge.Bridge
+				}
+				if intf.Target != nil {
+					intfTargetDev = intf.Target.Dev
+				} else {
+					intfTargetDev = "?"
+				}
+				_ = intfTargetDev
+				_ = intfType
+				deviceID := intf.MAC.Address[9:]
+				intfs[deviceID] = fmt.Sprintf("%s", intfTypeNmae)
+			}
+			d.Interfaces = intfs
+
 			result = append(result, *d)
 			log.Printf("Retrieve domain data (%s)", d.Name)
 			domain.Free()

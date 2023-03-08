@@ -53,8 +53,10 @@ func IterateDomains(doms []libvirt.Domain) {
 			for _, disk := range domcfg.Devices.Disks {
 				fmt.Printf("       %s | %s | %s | %s\n", 
 					disk.Device, 
-					disk.Driver.Name, 
-					disk.Driver.Type,
+					disk.Target.Dev,
+					disk.Target.Bus,
+					//disk.Driver.Name, 
+					//disk.Driver.Type,
 					disk.Source.File.File)
 			}
 			for _, intf := range domcfg.Devices.Interfaces {
