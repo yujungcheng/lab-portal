@@ -30,8 +30,10 @@
 
         <td>
             {{ range $key, $value := .Disks }}
-                {{ $key }}({{ $value }})
+                <text title="{{ $value.file }}">{{ $value.name }}({{ $value.capacity }})</text>
             {{ end }}
+
+
         </td>
         <td>
             {{ range $key, $value := .Interfaces }}

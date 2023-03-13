@@ -31,9 +31,8 @@ $ go install libvirt.org/libvirt-go-xml
 ```
 
 #### Run
-```
-$ go run main.go
-```
+Run command `go run main.go` and then open web browser on port 3000.
+
 
 #### Reference
 ```

@@ -19,9 +19,8 @@ type Domain struct {
 	MemoryStr  string
 	Vcpu       uint
 	CpuTime    uint64
-	Disks      map[string]string  // disk device name and size
-	//Interfaces map[string]string  // MAC address and connected Network
-	Interfaces []map[string]string
+	Disks      []map[string]string  // disk device name, sizes
+	Interfaces []map[string]string  // MAC address, connected Network/Bridge
 }
 
 func GetDomainStateStr(state libvirt.DomainState) string {
@@ -105,22 +104,35 @@ func GetAllDomains(flag string) []Domain {
 			domaincfg := &libvirtxml.Domain{}
 			_ = domaincfg.Unmarshal(domainxml)
 
-			var disks = map[string]string{}
+			var diskCapacity, diskAllocation, diskPhysical string
+			var disks = []map[string]string{}
 			for _, disk := range domaincfg.Devices.Disks {
 				if disk.Device == "disk" {
 					blockInfo, err := domain.GetBlockInfo(disk.Target.Dev, 0)
 					if err != nil {
-						log.Printf("Error: fail to get disk %s capacity", disk.Target.Dev)
-						disks[disk.Target.Dev] = "?"
+						log.Printf("Error: fail to get disk %s info", disk.Target.Dev)
 					} else {
-						disks[disk.Target.Dev] = ConvertSizeToString(blockInfo.Capacity, "GB")
+						diskCapacity = ConvertSizeToString(blockInfo.Capacity, "GB")
+						diskAllocation = ConvertSizeToString(blockInfo.Allocation, "GB")
+						diskPhysical = ConvertSizeToString(blockInfo.Physical, "GB")
 					}
+
+					d := map[string]string{
+						"name": disk.Target.Dev,
+						"file": disk.Source.File.File,
+						"capacity": diskCapacity,
+						"allocation": diskAllocation,
+						"physical": diskPhysical,
+					}
+					disks = append(disks, d)
+
+				} else if disk.Device == "cdrom" {
+					log.Printf("Disk %s is CDROM", disk.Target.Dev)
 				}
 			}
 			d.Disks = disks
 
 			var intfType, intfTypeNmae, intfTargetDev string
-			//var i = map[string]string{}  // todo: array of map to involve more details and keep item order.
 			var intfs = []map[string]string{}
 			for _, intf := range domaincfg.Devices.Interfaces {
 				if intf.Source.Network != nil {
