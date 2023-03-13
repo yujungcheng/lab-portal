@@ -36,6 +36,9 @@
         background-color: #dddddd;
     }
     */
+    tbody tr:hover {
+        background-color: #dddddd;
+    }
     th {
         background-color: #dddddd;
     }
@@ -101,8 +104,6 @@
     {{- /* comment with white space trimmed */ -}}
     {{- /* comment with white space and newline trimmed */ -}}
     <div class="menu">
-
-
 
         <div class="dropdown">
             <button class="dropbtn">

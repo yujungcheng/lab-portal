@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"log"
 	"sort"
 	"libvirt.org/go/libvirt"
@@ -21,7 +20,8 @@ type Domain struct {
 	Vcpu       uint
 	CpuTime    uint64
 	Disks      map[string]string  // disk device name and size
-	Interfaces map[string]string  // MAC address and connected Network
+	//Interfaces map[string]string  // MAC address and connected Network
+	Interfaces []map[string]string
 }
 
 func GetDomainStateStr(state libvirt.DomainState) string {
@@ -120,24 +120,27 @@ func GetAllDomains(flag string) []Domain {
 			d.Disks = disks
 
 			var intfType, intfTypeNmae, intfTargetDev string
-			var intfs = map[string]string{}  // todo: array of map to involve more details and keep item order.
+			//var i = map[string]string{}  // todo: array of map to involve more details and keep item order.
+			var intfs = []map[string]string{}
 			for _, intf := range domaincfg.Devices.Interfaces {
 				if intf.Source.Network != nil {
-					intfType = "N"
+					intfType = "Network"
 					intfTypeNmae = intf.Source.Network.Network
 				} else if intf.Source.Bridge != nil {
-					intfType = "B"
+					intfType = "Bridge"
 					intfTypeNmae = intf.Source.Bridge.Bridge
 				}
 				if intf.Target != nil {
 					intfTargetDev = intf.Target.Dev
-				} else {
-					intfTargetDev = "?"
 				}
-				_ = intfTargetDev
-				_ = intfType
-				deviceID := intf.MAC.Address[9:]
-				intfs[deviceID] = fmt.Sprintf("%s", intfTypeNmae)
+				i := map[string]string{
+					//"mac": intf.MAC.Address[9:],
+					"mac": intf.MAC.Address,
+					"name": intfTypeNmae,
+					"type": intfType,
+					"target": intfTargetDev,
+				}
+				intfs = append(intfs, i)
 			}
 			d.Interfaces = intfs
 

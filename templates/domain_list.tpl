@@ -35,7 +35,11 @@
         </td>
         <td>
             {{ range $key, $value := .Interfaces }}
-                {{ $key }}({{ $value }})
+                {{ if ne $value.target "" }}
+                    <text title="{{ $value.type }} | {{ $value.mac }} | {{ $value.target }}">{{ $value.name }}</text>
+                {{ else }}
+                    <text title="{{ $value.type }} | {{ $value.mac }}">{{ $value.name }}</text>
+                {{ end }}
             {{ end }}
         </td>
 
