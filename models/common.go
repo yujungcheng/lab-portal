@@ -1,15 +1,15 @@
 package models
 
 import (
-	"os"
-	"log"
 	"fmt"
-	"net"
-	"time"
-	"strconv"
-	"strings"
 	"gopkg.in/xmlpath.v2"
 	"libvirt.org/go/libvirt"
+	"log"
+	"net"
+	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 /* variables for model
@@ -18,13 +18,11 @@ var StartTime time.Time
 var ProcessID int
 var Conn libvirt.Connect
 
-
 func SetStartTime() { StartTime = time.Now() }
 
 func SetProcessID() { ProcessID = os.Getpid() }
 
 func SetLibvirtConnect(conn libvirt.Connect) { Conn = conn }
-
 
 /* functions
 ------------------------------------------------------------- */
@@ -40,13 +38,13 @@ func GetElapsedTime(startTime time.Time) time.Duration {
 	return time.Since(StartTime)
 }
 
-func GetHostname() (string) {
+func GetHostname() string {
 	var conn = GetLibvirtConnect()
 	defer conn.Close()
 
 	hostname, err := conn.GetHostname()
 	if err != nil {
-	    log.Fatalf("Fatal: fail to get hostname")
+		log.Fatalf("Fatal: fail to get hostname")
 	}
 	return hostname
 }
@@ -57,11 +55,11 @@ func GetLibvirtVersion() string {
 
 	libvirtVersion, err := conn.GetLibVersion()
 	if err != nil {
-	    log.Fatalf("Fatal: fail to get libvirt version")
+		log.Fatalf("Fatal: fail to get libvirt version")
 	}
-	major := libvirtVersion/1000000
-	minor := (libvirtVersion-(major*1000000))/1000
-	release := (libvirtVersion-(major*1000000)-(minor*1000))
+	major := libvirtVersion / 1000000
+	minor := (libvirtVersion - (major * 1000000)) / 1000
+	release := (libvirtVersion - (major * 1000000) - (minor * 1000))
 	return fmt.Sprintf("%d.%d.%d", major, minor, release)
 	//return strconv.FormatUint(uint64(libvirtVersion), 10)
 }

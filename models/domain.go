@@ -1,11 +1,19 @@
 package models
 
 import (
-	"log"
-	"sort"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
+	"log"
+	"path/filepath"
+	"sort"
+	"strings"
 )
+
+type DomainGroup struct {
+	GroupType string
+	GroupName string
+	Domains   []Domain
+}
 
 type Domain struct {
 	Name       string
@@ -19,8 +27,12 @@ type Domain struct {
 	MemoryStr  string
 	Vcpu       uint
 	CpuTime    uint64
-	Disks      []map[string]string  // disk device name, sizes
-	Interfaces []map[string]string  // MAC address, connected Network/Bridge
+	Disks      []map[string]string // disk device name, sizes
+	Interfaces []map[string]string // MAC address, connected Network/Bridge
+	Metadata   map[string]string   // extra info from description
+
+	StoragePool string // sotrage pool of first disk
+	Network     string // network/bridge name of first interface
 }
 
 func GetDomainStateStr(state libvirt.DomainState) string {
@@ -67,18 +79,34 @@ func GetFlag(flag string) libvirt.ConnectListAllDomainsFlags {
 	return fg
 }
 
-/* ------------------------------------------------------------------------ */
-
-func AllDomainsUUID() map[string]string {
-	return nil
+func parserDescription(desc string) map[string]string {
+	result := map[string]string{
+		"group":     "default", // default group
+		"tag":       "",        // set tag
+		"backup":    "",        // backup directory path of domain
+		"account":   "",        // record username/password
+		"ipaddress": "",        // network ip address
+	}
+	descLines := strings.Split(desc, "\n")
+	for _, descLine := range descLines {
+		for k := range result {
+			if strings.Contains(descLine, k+"=") {
+				tmp := strings.Split(descLine, "=")
+				result[k] = tmp[1]
+			}
+		}
+	}
+	return result
 }
+
+/* ------------------------------------------------------------------------ */
 
 func GetAllDomains(flag string) []Domain {
 	log.Println("Domain Model - get all domains")
 
 	result := make([]Domain, 0)
 
-	fg := GetFlag(flag)  // flag value: active, inactive, running, paused, shutoff, persistent
+	fg := GetFlag(flag) // flag value: active, inactive, running, paused, shutoff, persistent
 	domains, err := Conn.ListAllDomains(fg)
 	if err != nil {
 		log.Printf("Error: fail to get all domains")
@@ -87,18 +115,20 @@ func GetAllDomains(flag string) []Domain {
 			d := new(Domain)
 			info, _ := domain.GetInfo()
 			d.Name, _ = domain.GetName()
-			d.UUID, _  = domain.GetUUIDString()
+			d.UUID, _ = domain.GetUUIDString()
 			d.MaxMem = info.MaxMem
 			d.MaxMemStr = ConvertSizeToString(info.MaxMem*1024, "GB")
 			d.Memory = info.Memory
 			d.MemoryStr = ConvertSizeToString(info.Memory*1024, "GB")
 			d.Vcpu = info.NrVirtCpu
 			d.CpuTime = info.CpuTime
-			d.State = int(info.State)  // libvirt.DomainState
+			d.State = int(info.State) // libvirt.DomainState
 			d.StateStr = GetDomainStateStr(info.State)
 			if info.State == 1 || info.State == 3 {
 				d.ID, _ = domain.GetID()
 			}
+
+			log.Printf("+ Retriving domain data (%s)", d.Name)
 
 			domainxml, _ := domain.GetXMLDesc(0)
 			domaincfg := &libvirtxml.Domain{}
@@ -116,16 +146,14 @@ func GetAllDomains(flag string) []Domain {
 						diskAllocation = ConvertSizeToString(blockInfo.Allocation, "GB")
 						diskPhysical = ConvertSizeToString(blockInfo.Physical, "GB")
 					}
-
 					d := map[string]string{
-						"name": disk.Target.Dev,
-						"file": disk.Source.File.File,
-						"capacity": diskCapacity,
+						"name":       disk.Target.Dev,
+						"file":       disk.Source.File.File,
+						"capacity":   diskCapacity,
 						"allocation": diskAllocation,
-						"physical": diskPhysical,
+						"physical":   diskPhysical,
 					}
 					disks = append(disks, d)
-
 				} else if disk.Device == "cdrom" {
 					log.Printf("Disk %s is CDROM", disk.Target.Dev)
 				}
@@ -146,18 +174,18 @@ func GetAllDomains(flag string) []Domain {
 					intfTargetDev = intf.Target.Dev
 				}
 				i := map[string]string{
-					//"mac": intf.MAC.Address[9:],
-					"mac": intf.MAC.Address,
-					"name": intfTypeNmae,
-					"type": intfType,
+					"mac":    intf.MAC.Address, //"mac": intf.MAC.Address[9:],
+					"name":   intfTypeNmae,
+					"type":   intfType,
 					"target": intfTargetDev,
 				}
 				intfs = append(intfs, i)
 			}
 			d.Interfaces = intfs
 
+			// parser metadata from desc
+			d.Metadata = parserDescription(domaincfg.Description)
 			result = append(result, *d)
-			log.Printf("Retrieve domain data (%s)", d.Name)
 			domain.Free()
 		}
 	}
@@ -165,5 +193,39 @@ func GetAllDomains(flag string) []Domain {
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Name < result[j].Name
 	})
+	return result
+}
+
+func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
+	var groupName string
+	var result = make(map[string][]Domain)
+
+	domains := GetAllDomains(flag)
+	for _, domain := range domains {
+		if groupBy == "group" {
+			groupName = domain.Metadata["group"]
+			log.Printf("set %s as group name for %s", groupName, domain.Name)
+		} else if groupBy == "storage" {
+			diskFileDir := filepath.Dir(domain.Disks[0]["file"])
+			storagePool, err := Conn.LookupStoragePoolByTargetPath(diskFileDir)
+			if err == nil && storagePool != nil {
+				groupName, _ = storagePool.GetName()
+				log.Printf("set storage pool %s as group name for %s", groupName, domain.Name)
+			} else {
+				log.Printf("Error: fail to get storage pool nmae for %s", domain.Name)
+				groupName = "*unknown pool name"
+			}
+		} else if groupBy == "network" {
+			if len(domain.Interfaces) >= 1 {
+				intf := domain.Interfaces[0]
+				groupName = intf["type"] + ":" + intf["name"]
+			} else {
+				log.Printf("Error: fail to get network/bridge nmae for %s", domain.Name)
+				groupName = "default"
+			}
+			log.Printf("set %s as group name for %s", groupName, domain.Name)
+		}
+		result[groupName] = append(result[groupName], domain)
+	}
 	return result
 }

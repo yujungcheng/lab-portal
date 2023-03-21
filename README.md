@@ -30,6 +30,15 @@ $ go get libvirt.org/libvirt-go-xml
 $ go install libvirt.org/libvirt-go-xml
 ```
 
+To format the code
+```
+$ gofmt -s -w .
+
+OR
+
+$ go fmt ...
+```
+
 #### Run
 Run command `go run main.go` and then open web browser on port 3000.
 

@@ -13,7 +13,3 @@ libvirt.org/go/libvirt v1.9000.0 h1:u95YEBuk85v2GO6+M3qv+WdAu2JKQSMWhCJ4R+kNDQo=
 libvirt.org/go/libvirt v1.9000.0/go.mod h1:1WiFE8EjZfq+FCVog+rvr1yatKbKZ9FaFMZgEqxEJqQ=
 libvirt.org/go/libvirtxml v1.9000.0 h1:Qu4rHf7lgsbWSdLapNzHAECwLlilyocn4R3v14mYIoU=
 libvirt.org/go/libvirtxml v1.9000.0/go.mod h1:7Oq2BLDstLr/XtoQD8Fr3mfDNrzlI3utYKySXF2xkng=
-libvirt.org/libvirt-go v7.4.0+incompatible h1:1gFJevSrEoxx/5nZPB6GaTDdoc902NP2KyVPwQ07Ji4=
-libvirt.org/libvirt-go v7.4.0+incompatible/go.mod h1:CPoljLoiC2aEw+62g1rZXl2oXAJaNsrq4YCSmJOELek=
-libvirt.org/libvirt-go-xml v7.4.0+incompatible h1:NaCRjbtz//xuTZOp1nDHbe0eu5BQlhIy5PPuc09EWtU=
-libvirt.org/libvirt-go-xml v7.4.0+incompatible/go.mod h1:FL+H1+hKNWDdkKQGGS4sGCZJ3pGWcjt6VbxZvPlQJkY=
