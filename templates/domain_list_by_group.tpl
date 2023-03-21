@@ -2,7 +2,7 @@
 
 <p>
     <h3>
-        List All Domains by group => total {{ len .DomainsByGroup }} groups(s) |
+        => List All Domains by group : {{ len .DomainsByGroup }} groups(s) |
         <a href="/domains/list-by-group?mode=group">Group By Group Name</a> |
         <a href="/domains/list-by-group?mode=storage">Group By Storage Pool</a> |
         <a href="/domains/list-by-group?mode=network">Group By Network</a> 
@@ -22,7 +22,7 @@
 
     {{ range $group, $domains := .DomainsByGroup }}
     <tr>
-        <td colspan=7><h4>{{ $group }}</h4></td>
+        <td colspan=7><h4>{{ $group }} ... {{ len $domains }} domains</h4></td>
     </tr>
     {{ range $domains }}
 
