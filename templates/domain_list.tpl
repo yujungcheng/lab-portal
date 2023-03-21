@@ -2,7 +2,7 @@
 
 <p>
     <h3>
-        <a href="/domains/list">List All Domains</a> => Total {{ len .Domains }} domain(s). | 
+        List All Domains => Total {{ len .Domains }} domain(s). | 
         <a href="/domains/list-by-group?mode=group">Group By Group Name</a> |
         <a href="/domains/list-by-group?mode=storage">Group By Storage Pool</a> |
         <a href="/domains/list-by-group?mode=network">Group By Network</a> 
@@ -59,6 +59,7 @@
         </td>
     </tr>
     {{ end }}
+
 
 </table>
 {{ end }}

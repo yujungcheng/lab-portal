@@ -1,10 +1,10 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
+	"os"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 	}
 	fmt.Printf("%d active domains:\n", len(doms))
 	IterateDomains(doms)
-	
+
 	doms, err = conn.ListAllDomains(libvirt.CONNECT_LIST_DOMAINS_INACTIVE)
 	if err != nil {
 		fmt.Println("Fail to get inactive domains.")
@@ -44,18 +44,18 @@ func IterateDomains(doms []libvirt.Domain) {
 			domxml, _ := dom.GetXMLDesc(0)
 			domcfg := &libvirtxml.Domain{}
 			_ = domcfg.Unmarshal(domxml)
-			fmt.Printf("  %02d - %s | %s | %d | %d\n", 
-			        count,
-					domcfg.UUID, 
-					name, 
-					domcfg.VCPU.Value, 
-					domcfg.Memory.Value)
+			fmt.Printf("  %02d - %s | %s | %d | %d\n",
+				count,
+				domcfg.UUID,
+				name,
+				domcfg.VCPU.Value,
+				domcfg.Memory.Value)
 			for _, disk := range domcfg.Devices.Disks {
-				fmt.Printf("       %s | %s | %s | %s\n", 
-					disk.Device, 
+				fmt.Printf("       %s | %s | %s | %s\n",
+					disk.Device,
 					disk.Target.Dev,
 					disk.Target.Bus,
-					//disk.Driver.Name, 
+					//disk.Driver.Name,
 					//disk.Driver.Type,
 					disk.Source.File.File)
 			}

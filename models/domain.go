@@ -30,9 +30,6 @@ type Domain struct {
 	Disks      []map[string]string // disk device name, sizes
 	Interfaces []map[string]string // MAC address, connected Network/Bridge
 	Metadata   map[string]string   // extra info from description
-
-	StoragePool string // sotrage pool of first disk
-	Network     string // network/bridge name of first interface
 }
 
 func GetDomainStateStr(state libvirt.DomainState) string {

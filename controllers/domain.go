@@ -9,11 +9,11 @@ import (
 
 type DomainList struct {
 	Domains []mod.Domain
+	DomainsByGroup map[string][]mod.Domain
 }
 
 type DomainController struct {
 	AllDomains        DomainList
-	AllDomainsByGroup map[string][]mod.Domain
 }
 
 func (d DomainController) List(w http.ResponseWriter, r *http.Request) {
@@ -64,8 +64,10 @@ func (d DomainController) ListByGroup(w http.ResponseWriter, r *http.Request) {
 
 	mode = r.URL.Query().Get("mode")
 	allDomainsByGroup = mod.GetAllDomainsByGroup(status, mode)
-	d.AllDomainsByGroup = allDomainsByGroup
-
+	d.AllDomains =  DomainList{
+		DomainsByGroup: allDomainsByGroup,
+	}
+	
 	tplFiles := []string{
 		"templates/portal.tpl",
 		"templates/base.tpl",
@@ -77,7 +79,7 @@ func (d DomainController) ListByGroup(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", 500)
 	}
-	err = tpl.Execute(w, d.AllDomainsByGroup)
+	err = tpl.Execute(w, d.AllDomains)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", 500)
