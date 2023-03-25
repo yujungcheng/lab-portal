@@ -36,10 +36,16 @@
         background-color: #dddddd;
     }
     */
+    /*
     tbody tr:hover {
         background-color: #dddddd;
     }
+    */
     th {
+        background-color: #dddddd;
+    }
+
+    .domain_list tr:hover {
         background-color: #dddddd;
     }
 
@@ -110,10 +116,10 @@
                 <a href="/domains">Domains</a>
             </button> |
             <div class="dropdown-content">
-                <a href="/domains/create">[ Create New ]</a>
-                <a href="/domains/create-from-instance">[ Create From Instance ]</a>
-                <a href="/domains/create-from-template">[ Create From Template ]</a>
-                <a href="/domains/create-from-volume">[ Create From Volume ]</a>
+                <a href="/domains/create-page">[ Create Domain ]</a>
+                <a href="/domains/delete-page">[ Delete Domain ]</a>
+                <a href="/domains/update-page">[ Update Domain ]</a>
+                <a href="/domains/backup-page">[ Backup Domain ]</a>
             </div>
         </div>
 

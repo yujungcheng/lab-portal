@@ -2,14 +2,14 @@
 
 <p>
     <h3>
-        => List All Domains : {{ len .Domains }} domain(s). | 
+        => List All Domains ... {{ len .Domains }} domain(s). | 
         <a href="/domains/list-by-group?mode=group">Group By Group Name</a> |
         <a href="/domains/list-by-group?mode=storage">Group By Storage Pool</a> |
         <a href="/domains/list-by-group?mode=network">Group By Network</a> 
     </h3>
 </p>
 
-<table>
+<table class="domain_list">
     <tr>
         <th width=200px>Name</th>
         <th>State</th>

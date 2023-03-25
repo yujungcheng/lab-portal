@@ -29,6 +29,9 @@ func main() {
 	mux.HandleFunc("/domains/list", domainCtl.List)
 	mux.HandleFunc("/domains/list-by-group", domainCtl.ListByGroup)
 
+	mux.HandleFunc("/domains/create-page", domainCtl.GetCreatePage)
+	mux.HandleFunc("/domains/create", domainCtl.Create)
+
 	/*
 		mux.HandleFunc("/domains/create-page", domainCtl.Create)
 		mux.HandleFunc("/domains/delete-page", domainCtl.Create)

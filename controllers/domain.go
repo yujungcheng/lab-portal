@@ -12,8 +12,15 @@ type DomainList struct {
 	DomainsByGroup map[string][]mod.Domain
 }
 
+type DomainCreate struct {
+	StoragePools []mod.StoragePool
+	Networks []mod.Network
+	Templates []string
+}
+
 type DomainController struct {
-	AllDomains        DomainList
+	AllDomains DomainList
+	CreateForm DomainCreate
 }
 
 func (d DomainController) List(w http.ResponseWriter, r *http.Request) {
@@ -47,8 +54,6 @@ func (d DomainController) List(w http.ResponseWriter, r *http.Request) {
 
 	//checked_at := time.Now()
 	//checked_at.Format(time.RFC1123)
-
-	log.Println("Controller - list domains completed")
 }
 
 func (d DomainController) ListByGroup(w http.ResponseWriter, r *http.Request) {
@@ -84,6 +89,34 @@ func (d DomainController) ListByGroup(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", 500)
 	}
+}
+
+func (d DomainController) GetCreatePage(w http.ResponseWriter, r *http.Request) {
+
+	storagePools := mod.GetAllStoragePools()
+	networks := mod.GetAllNetworks()
+
+	d.CreateForm = DomainCreate{
+		StoragePools: storagePools,
+		Networks: networks,
+	}
+
+	tplFiles := []string{
+		"templates/portal.tpl",
+		"templates/base.tpl",
+		"templates/domain_create_page.tpl",
+	}
+	tpl, err := template.ParseFiles(tplFiles...)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", 500)
+	}
+	err = tpl.Execute(w, d.CreateForm)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", 500)
+	}
+
 }
 
 func (d DomainController) Create(w http.ResponseWriter, r *http.Request) {

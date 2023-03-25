@@ -2,7 +2,7 @@
 
 <p>
     <h3>
-        => List All Domains by group : {{ len .DomainsByGroup }} groups(s) |
+        => List All Domains by group ... {{ len .DomainsByGroup }} groups(s) |
         <a href="/domains/list-by-group?mode=group">Group By Group Name</a> |
         <a href="/domains/list-by-group?mode=storage">Group By Storage Pool</a> |
         <a href="/domains/list-by-group?mode=network">Group By Network</a> 
@@ -11,7 +11,7 @@
 
 <table>
     <tr>
-        <th width=200px>Name</th>
+        <th width=240px>Name</th>
         <th>State</th>
         <th>Vcpu</th>
         <th>Memory</th>
@@ -19,16 +19,16 @@
         <th>Interfaces</th>
         <th>Actions</th>
     </tr>
-
     {{ range $group, $domains := .DomainsByGroup }}
     <tr>
-        <td colspan=7><h4>{{ $group }} ... {{ len $domains }} domains</h4></td>
+        <td colspan=7><b>{{ $group }} ... {{ len $domains }} domains</b></td>
     </tr>
+    <tr></tr>
     {{ range $domains }}
 
     <tr>
         <td>
-          <text title="{{ .UUID }}">
+          <text title="{{ .UUID }}">&nbsp;&nbsp;&nbsp;&nbsp;
              <a href="/domains/show?uuid={{ .UUID }}">{{ .Name }}</a>
           </text>
 

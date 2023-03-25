@@ -83,6 +83,7 @@ func parserDescription(desc string) map[string]string {
 		"backup":    "",        // backup directory path of domain
 		"account":   "",        // record username/password
 		"ipaddress": "",        // network ip address
+		"template":  "false",   // set as template or not
 	}
 	descLines := strings.Split(desc, "\n")
 	for _, descLine := range descLines {
