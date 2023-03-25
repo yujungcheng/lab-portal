@@ -1,10 +1,10 @@
 package models
 
 import (
-	"log"
-	"sort"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
+	"log"
+	"sort"
 )
 
 type StoragePool struct {
@@ -61,12 +61,12 @@ func GetAllStoragePools() []StoragePool {
 			s.Available = info.Available
 
 			log.Printf("+ Retriving storage pool data (%s)", s.Name)
-			
+
 			storagePoolxml, _ := pool.GetXMLDesc(0)
-            storagePoolcfg := &libvirtxml.StoragePool{}
+			storagePoolcfg := &libvirtxml.StoragePool{}
 			_ = storagePoolcfg.Unmarshal(storagePoolxml)
 			s.Path = storagePoolcfg.Target.Path
-			
+
 			result = append(result, *s)
 		}
 	}

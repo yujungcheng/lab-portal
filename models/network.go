@@ -1,18 +1,18 @@
 package models
 
 import (
-	"log"
-	"sort"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
+	"log"
+	"sort"
 )
 
 type Interface struct {
-	Name string
-	UUID string
+	Name       string
+	UUID       string
 	MacAddress string
-	Owner string
-	OwnerUUID string
+	Owner      string
+	OwnerUUID  string
 
 	IpAddress string
 	IpNetmask string
@@ -21,15 +21,15 @@ type Interface struct {
 }
 
 type Network struct {
-	Name string
-	UUID string
-	Bridge string
-	IsActive bool	// State
+	Name         string
+	UUID         string
+	Bridge       string
+	IsActive     bool // State
 	IsPersistent bool
-	AutoStart bool
-    ForwardMode string
-	DhcpRange []string
-	DhcpHosts []string    
+	AutoStart    bool
+	ForwardMode  string
+	DhcpRange    []string
+	DhcpHosts    []string
 }
 
 /* ------------------------------------------------------------------------ */
@@ -50,7 +50,7 @@ func GetAllNetworks() []Network {
 			n.AutoStart, _ = network.GetAutostart()
 			n.IsActive, _ = network.IsActive()
 			n.IsPersistent, _ = network.IsPersistent()
-			
+
 			log.Printf("+ Retriving network data (%s)", n.Name)
 
 			networkxml, _ := network.GetXMLDesc(0)
@@ -64,17 +64,17 @@ func GetAllNetworks() []Network {
 				//netmask := ip.Netmask
 				if ip.DHCP != nil {
 					for _, _dhcpRange := range ip.DHCP.Ranges {
-						_range := _dhcpRange.Start+"-"+_dhcpRange.End
+						_range := _dhcpRange.Start + "-" + _dhcpRange.End
 						n.DhcpRange = append(n.DhcpRange, _range)
 					}
 					for _, _dhcpHost := range ip.DHCP.Hosts {
-						_host := _dhcpHost.Name+" "+_dhcpHost.MAC+" "+_dhcpHost.IP
+						_host := _dhcpHost.Name + " " + _dhcpHost.MAC + " " + _dhcpHost.IP
 						n.DhcpHosts = append(n.DhcpHosts, _host)
 					}
 				}
 				//log.Printf("DHCP: %s %s %s %s", address, netmask, dhcpRange, dhcpHosts)
 			}
-			result = append(result, *n)	
+			result = append(result, *n)
 		}
 	}
 

@@ -8,14 +8,14 @@ import (
 )
 
 type DomainList struct {
-	Domains []mod.Domain
+	Domains        []mod.Domain
 	DomainsByGroup map[string][]mod.Domain
 }
 
 type DomainCreate struct {
 	StoragePools []mod.StoragePool
-	Networks []mod.Network
-	Templates []string
+	Networks     []mod.Network
+	Templates    []string
 }
 
 type DomainController struct {
@@ -69,10 +69,10 @@ func (d DomainController) ListByGroup(w http.ResponseWriter, r *http.Request) {
 
 	mode = r.URL.Query().Get("mode")
 	allDomainsByGroup = mod.GetAllDomainsByGroup(status, mode)
-	d.AllDomains =  DomainList{
+	d.AllDomains = DomainList{
 		DomainsByGroup: allDomainsByGroup,
 	}
-	
+
 	tplFiles := []string{
 		"templates/portal.tpl",
 		"templates/base.tpl",
@@ -98,7 +98,7 @@ func (d DomainController) GetCreatePage(w http.ResponseWriter, r *http.Request) 
 
 	d.CreateForm = DomainCreate{
 		StoragePools: storagePools,
-		Networks: networks,
+		Networks:     networks,
 	}
 
 	tplFiles := []string{
