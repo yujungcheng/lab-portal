@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-type DomainGroup struct {
+type DomainGroup struct {  // unused
 	GroupType string
 	GroupName string
 	Domains   []Domain
@@ -144,16 +144,18 @@ func GetAllDomains(flag string) []Domain {
 						diskAllocation = ConvertSizeToString(blockInfo.Allocation, "GB")
 						diskPhysical = ConvertSizeToString(blockInfo.Physical, "GB")
 					}
+					// todo: get storage pool of disk
 					d := map[string]string{
 						"name":       disk.Target.Dev,
 						"file":       disk.Source.File.File,
 						"capacity":   diskCapacity,
 						"allocation": diskAllocation,
 						"physical":   diskPhysical,
+						"storagePool": "",
 					}
 					disks = append(disks, d)
 				} else if disk.Device == "cdrom" {
-					log.Printf("Disk %s is CDROM", disk.Target.Dev)
+					log.Printf("  - disk %s is CDROM", disk.Target.Dev)
 				}
 			}
 			d.Disks = disks
@@ -202,7 +204,6 @@ func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
 	for _, domain := range domains {
 		if groupBy == "group" {
 			groupName = domain.Metadata["group"]
-			log.Printf("set %s as group name for %s", groupName, domain.Name)
 		} else if groupBy == "storage" {
 			diskFileDir := filepath.Dir(domain.Disks[0]["file"])
 			storagePool, err := Conn.LookupStoragePoolByTargetPath(diskFileDir)
@@ -221,8 +222,9 @@ func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
 				log.Printf("Error: fail to get network/bridge nmae for %s", domain.Name)
 				groupName = "default"
 			}
-			log.Printf("set %s as group name for %s", groupName, domain.Name)
+			
 		}
+		log.Printf("+ Set %s as group name for %s", groupName, domain.Name)
 		result[groupName] = append(result[groupName], domain)
 	}
 	return result

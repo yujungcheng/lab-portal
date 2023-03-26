@@ -24,6 +24,7 @@
         font-family: arial, sans-serif;
         border-collapse: collapse;
         width: 100%;
+        border: 1px solid #dddddd;;
     }
     td, th {
         border: 1px solid #dddddd;
@@ -31,11 +32,6 @@
         padding: 4px;
         vertical-align: top;
     }
-    /*
-    tr:nth-child(even) {
-        background-color: #dddddd;
-    }
-    */
     /*
     tbody tr:hover {
         background-color: #dddddd;

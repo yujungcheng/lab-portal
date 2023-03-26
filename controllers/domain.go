@@ -15,7 +15,7 @@ type DomainList struct {
 type DomainCreate struct {
 	StoragePools []mod.StoragePool
 	Networks     []mod.Network
-	Templates    []string
+	Templates    []mod.Template
 }
 
 type DomainController struct {
@@ -30,7 +30,6 @@ func (d DomainController) List(w http.ResponseWriter, r *http.Request) {
 	if status == "" {
 		status = "persistent"
 	}
-
 	allDomains := mod.GetAllDomains(status)
 	d.AllDomains = DomainList{
 		Domains: allDomains,
@@ -78,7 +77,6 @@ func (d DomainController) ListByGroup(w http.ResponseWriter, r *http.Request) {
 		"templates/base.tpl",
 		"templates/domain_list_by_group.tpl",
 	}
-
 	tpl, err := template.ParseFiles(tplFiles...)
 	if err != nil {
 		log.Println(err)
@@ -92,13 +90,16 @@ func (d DomainController) ListByGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (d DomainController) GetCreatePage(w http.ResponseWriter, r *http.Request) {
+	log.Println("Controller - load domain create page")
 
 	storagePools := mod.GetAllStoragePools()
 	networks := mod.GetAllNetworks()
+	templates := mod.GetAllTemplates()
 
 	d.CreateForm = DomainCreate{
 		StoragePools: storagePools,
-		Networks:     networks,
+		Networks: networks,
+		Templates: templates,
 	}
 
 	tplFiles := []string{
@@ -116,7 +117,6 @@ func (d DomainController) GetCreatePage(w http.ResponseWriter, r *http.Request) 
 		log.Println(err)
 		http.Error(w, "Internal Server Error", 500)
 	}
-
 }
 
 func (d DomainController) Create(w http.ResponseWriter, r *http.Request) {
