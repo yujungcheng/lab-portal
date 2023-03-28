@@ -120,8 +120,40 @@ func (d DomainController) GetCreatePage(w http.ResponseWriter, r *http.Request) 
 }
 
 func (d DomainController) Create(w http.ResponseWriter, r *http.Request) {
-	reqData := r.URL.Query()
-	_ = reqData
+	log.Println("Controller - create domains")
+	if err := r.ParseForm(); err != nil {
+		log.Printf("Error: %s", err)
+	} else {
+		group1 := map[string]string{}
+		group1["prefix"] = r.PostFormValue("group1-prefix")
+		group1["name"] = r.PostFormValue("group1-name")
+		group1["vcpu"] = r.PostFormValue("group1-vcpu")
+		group1["ram"] = r.PostFormValue("group1-ram")
+		group1["count"] = r.PostFormValue("group1-count")
+
+		group1["diskBus"] = r.PostFormValue("group1-disk-bus")
+		group1["storagePool"] = r.PostFormValue("group1-storage-pool")
+		group1["bootDiskDomain"] = r.PostFormValue("group1-boot-disk-domain")
+		group1["disk2Size"] = r.PostFormValue("group1-disk2-size")
+		group1["disk3Size"] = r.PostFormValue("group1-disk3-size")
+		group1["disk4Size"] = r.PostFormValue("group1-disk4-size")
+
+		group1["nicDriver"] = r.PostFormValue("group1-nic-driver")
+		group1["nic1"] = r.PostFormValue("group1-nic1")
+		group1["nic2"] = r.PostFormValue("group1-nic2")
+		group1["nic3"] = r.PostFormValue("group1-nic3")
+
+		// clone domain
+		_ = mod.CreateDomains(group1)
+
+		//todo: update vCPU and RAM
+
+		//todo: create data volume and attch to domain
+
+		//todo: attach interface and attach to domain
+	}
+
+	//d.GetCreatePage(w, r)
 }
 
 func (d DomainController) Delete(w http.ResponseWriter, r *http.Request) {

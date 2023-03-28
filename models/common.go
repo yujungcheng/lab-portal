@@ -2,14 +2,15 @@ package models
 
 import (
 	"fmt"
-	"gopkg.in/xmlpath.v2"
-	"libvirt.org/go/libvirt"
 	"log"
 	"net"
 	"os"
+	"os/exec"
+	"time"
 	"strconv"
 	"strings"
-	"time"
+	"gopkg.in/xmlpath.v2"
+	"libvirt.org/go/libvirt"
 )
 
 /* variables for model
@@ -103,4 +104,14 @@ func ConvertNetmaskToNumber(mask string) int {
 	ip := net.ParseIP(mask)
 	sz, _ := net.IPMask(ip.To4()).Size()
 	return sz
+}
+
+func RunVirsh(args ... string) error {
+	c := exec.Command("virsh", strings.Join(args, " "))
+	out, err := c.Output()
+	if err != nil {
+		log.Printf("Error: %s", err)
+	}
+	log.Printf("Command output: %s", out)
+	return err
 }

@@ -78,3 +78,26 @@ func GetAllStoragePools() []StoragePool {
 
 	return result
 }
+
+func GetStoragePool(name string) StoragePool {
+	pool, _ := Conn.LookupStoragePoolByName(name)
+	s := new(StoragePool)
+	s.Name, _ = pool.GetName()
+	s.UUID, _ = pool.GetUUIDString()
+	s.IsActive, _ = pool.IsActive()
+	s.NumOfVolumes, _ = pool.NumOfStorageVolumes()
+
+	info, _ := pool.GetInfo()
+	s.State = GetStoragePoolStateStr(info.State)
+	s.Capacity = info.Capacity
+	s.Allocation = info.Allocation
+	s.Available = info.Available
+
+	log.Printf("+ Retriving storage pool data (%s)", s.Name)
+
+	storagePoolxml, _ := pool.GetXMLDesc(0)
+	storagePoolcfg := &libvirtxml.StoragePool{}
+	_ = storagePoolcfg.Unmarshal(storagePoolxml)
+	s.Path = storagePoolcfg.Target.Path
+	return *s
+}

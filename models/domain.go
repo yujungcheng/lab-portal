@@ -1,12 +1,14 @@
 package models
 
 import (
-	"libvirt.org/go/libvirt"
-	"libvirt.org/go/libvirtxml"
 	"log"
-	"path/filepath"
 	"sort"
 	"strings"
+	"strconv"
+	"os/exec"
+	"path/filepath"
+	"libvirt.org/go/libvirt"
+	"libvirt.org/go/libvirtxml"
 )
 
 type DomainGroup struct {  // unused
@@ -227,5 +229,95 @@ func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
 		log.Printf("+ Set %s as group name for %s", groupName, domain.Name)
 		result[groupName] = append(result[groupName], domain)
 	}
+	return result
+}
+
+func CreateDomains(spec map[string]string) map[string][]Domain {
+	var result = make(map[string][]Domain)
+	var sourceDomainName, newDomainName, newDomainFile string
+
+	log.Printf("+ Creating new domain, spec: %s", spec)
+	count, _ := strconv.Atoi(spec["count"])
+	for i := 1; i <= count; i++ {
+		index := strconv.Itoa(i)
+		if count == 1 {
+			newDomainName = spec["prefix"]+"-"+spec["name"]
+		} else {
+			newDomainName = spec["prefix"]+"-"+spec["name"]+"-"+index
+		}
+		storagePool := GetStoragePool(spec["storagePool"])
+		newDomainFile = storagePool.Path+"/"+newDomainName+".qcow2"
+		sourceDomainName = spec["bootDiskDomain"]	
+
+		log.Printf("  - Source Domain:%s, New Domain:%s, New Domain File:%s", sourceDomainName, newDomainName, newDomainFile)
+
+		// clone domain 
+		c := exec.Command("virt-clone", "--original", sourceDomainName, "--name", newDomainName, "--file", newDomainFile)
+		_, err := c.Output()
+		if err != nil {
+			log.Printf("Error: fail to clone domain. %s", err)
+			return result
+		}
+
+		// detach all network interface and then attach new interface
+		/* 
+		  assume only single interface attached, otherwise need use --mac option to remove all interface
+		  and the interface is network type.
+		*/
+		c = exec.Command("virsh", "detach-interface", "--persistent", "--domain", newDomainName, "--type", "network")
+		_, err = c.Output()
+		if err != nil {
+			log.Printf("Error: fail to remove interface. %s", err)
+			return result
+		}
+
+		// so far support attach "network" type interface only.
+		log.Printf("  - NIC Driver: %s", spec["nicDriver"])
+		if spec["nic1"] != "" {
+			log.Printf("  - NIC1: %s", spec["nic1"])
+			c = exec.Command("virsh", "attach-interface", "--persistent", "--type", "network",
+				"--domain", newDomainName, "--model", spec["nicDriver"], "--source", spec["nic1"])
+			_, err = c.Output()
+			if err != nil {
+				log.Printf("Error: fail to add nic1. %s", err)
+				return result
+			}
+		}
+		if spec["nic2"] != "" {
+			log.Printf("  - NIC2: %s", spec["nic2"])
+			c = exec.Command("virsh", "attach-interface", "--persistent", "--type", "network",
+				"--domain", newDomainName, "--model", spec["nicDriver"], "--source", spec["nic2"])
+			_, err = c.Output()
+			if err != nil {
+				log.Printf("Error: fail to add nic2. %s", err)
+				return result
+			}
+		}
+		if spec["nic3"] != "" {
+			log.Printf("  - NIC3: %s", spec["nic3"])
+			c = exec.Command("virsh", "attach-interface", "--persistent", "--type", "network",
+				"--domain", newDomainName,  "--model", spec["nicDriver"], "--source", spec["nic3"])
+			_, err = c.Output()
+			if err != nil {
+				log.Printf("Error: fail to add nic3. %s", err)
+				return result
+			}
+		}
+
+		// create and attach data disk
+		log.Printf("  - Disk Bus: %s", spec["diskBus"])
+		if spec["disk2Size"] != "" {
+			log.Printf("  - Disk2: %s", spec["disk2Size"])
+		}
+		if spec["disk3Size"] != "" {
+			log.Printf("  - Disk3: %s", spec["disk3Size"])
+		}
+		if spec["disk4Size"] != "" {
+			log.Printf("  - Disk4: %s", spec["disk4Size"])
+		}
+		//c = exec.Command()
+
+	}
+
 	return result
 }

@@ -9,6 +9,7 @@ type Template struct {
 	Name string
 	StoragePoolName string
 	StoragePoolUUID string
+	StoragePoolPath string
 	BootVolumeFile string
 	DataVolume []int
 }
@@ -17,10 +18,9 @@ type Template struct {
 func GetAllTemplates() []Template {
 	result := make([]Template, 0)
 
-	// get template from template group of domain
+	// get template from domain template group
 	domainGroups := GetAllDomainsByGroup("persistent", "group")
 	templateDomains := domainGroups["template"]
-	
 	for _, template := range templateDomains {
 		log.Printf("+ Retriving template data (%s)", template.Name)
 		if len(template.Disks) >= 1 {
