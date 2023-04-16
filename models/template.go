@@ -5,15 +5,14 @@ import (
 )
 
 type Template struct {
-	UUID string
-	Name string
+	UUID            string
+	Name            string
 	StoragePoolName string
 	StoragePoolUUID string
 	StoragePoolPath string
-	BootVolumeFile string
-	DataVolume []int
+	BootVolumeFile  string
+	DataVolume      []int
 }
-
 
 func GetAllTemplates() []Template {
 	log.Println("  Get all templates")
@@ -26,7 +25,7 @@ func GetAllTemplates() []Template {
 		if len(template.Disks) >= 1 {
 			t := new(Template)
 			t.UUID = template.UUID
-			t.Name =  template.Name
+			t.Name = template.Name
 			t.BootVolumeFile = template.Disks[0]["file"]
 			result = append(result, *t)
 		} else {

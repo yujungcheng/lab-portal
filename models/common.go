@@ -2,15 +2,15 @@ package models
 
 import (
 	"fmt"
+	"gopkg.in/xmlpath.v2"
+	"libvirt.org/go/libvirt"
 	"log"
 	"net"
 	"os"
 	"os/exec"
-	"time"
 	"strconv"
 	"strings"
-	"gopkg.in/xmlpath.v2"
-	"libvirt.org/go/libvirt"
+	"time"
 )
 
 /* variables for model
@@ -109,28 +109,28 @@ func ConvertNetmaskToNumber(mask string) int {
 	return sz
 }
 
-func RunVirsh(args... string) (string, error) {
+func RunVirsh(args ...string) (string, error) {
 	c := exec.Command("virsh", args...)
 	out, err := c.Output()
 	/*
-	if err != nil {
-		log.Printf("    RunVirsh Error: %s", err)
-	} else {
-		log.Printf("    RunVirsh Output: %s", out)
-	}
-	*/	
+		if err != nil {
+			log.Printf("    RunVirsh Error: %s", err)
+		} else {
+			log.Printf("    RunVirsh Output: %s", out)
+		}
+	*/
 	return string(out), err
 }
 
-func RunCommand(cmd string, args... string) (string, error) {
+func RunCommand(cmd string, args ...string) (string, error) {
 	c := exec.Command(cmd, args...)
 	out, err := c.Output()
 	/*
-	if err != nil {
-		log.Printf("    RunCommand Error: %s", err)
-	} else {
-		log.Printf("    RunCommand Output: %s", out)
-	}
+		if err != nil {
+			log.Printf("    RunCommand Error: %s", err)
+		} else {
+			log.Printf("    RunCommand Output: %s", out)
+		}
 	*/
 	return string(out), err
 }

@@ -1,11 +1,11 @@
 package controller
 
 import (
-	"log"
-	"strconv"
-	"net/http"
 	"html/template"
 	mod "lab-portal/models"
+	"log"
+	"net/http"
+	"strconv"
 )
 
 type DomainList struct {
@@ -14,14 +14,14 @@ type DomainList struct {
 }
 
 type DomainClone struct {
-	Templates    []mod.Template  // original domain
+	Templates    []mod.Template // original domain
 	StoragePools []mod.StoragePool
 	Networks     []mod.Network
 }
 
 type DomainController struct {
-	AllDomains DomainList
-	CloneForm DomainClone
+	AllDomains  DomainList
+	CloneForm   DomainClone
 	CloneResult map[string]string
 }
 
@@ -100,8 +100,8 @@ func (d DomainController) GetClonePage(w http.ResponseWriter, r *http.Request) {
 
 	d.CloneForm = DomainClone{
 		StoragePools: storagePools,
-		Networks: networks,
-		Templates: templates,
+		Networks:     networks,
+		Templates:    templates,
 	}
 
 	tplFiles := []string{
@@ -135,24 +135,24 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 		var newDomainName string
 		for groupID := 1; groupID <= maxGroupID; groupID++ {
 			strGroupID := strconv.Itoa(groupID)
-			group := "group"+strGroupID+"-"
+			group := "group" + strGroupID + "-"
 
 			original := r.PostFormValue("group1-original-domain")
-			name := r.PostFormValue(group+"name")
-			count := r.PostFormValue(group+"count")
+			name := r.PostFormValue(group + "name")
+			count := r.PostFormValue(group + "count")
 			maxIDCount, _ := strconv.Atoi(count)
 
-			prefix := r.PostFormValue(group+"prefix")
+			prefix := r.PostFormValue(group + "prefix")
 			if prefix != "" {
-				prefix = prefix+"-"
+				prefix = prefix + "-"
 			}
 
-			storagePoolName := r.PostFormValue(group+"storage-pool")
+			storagePoolName := r.PostFormValue(group + "storage-pool")
 			storagePool := mod.GetStoragePool(storagePoolName)
 			storagePoolPath := storagePool.Path
 
 			diskNames := []string{"db", "dc", "dd", "de", "df", "dg"}
-			diskBus := r.PostFormValue(group+"disk-bus")
+			diskBus := r.PostFormValue(group + "disk-bus")
 			diskTargetPrefix := "v"
 			if diskBus == "ide" {
 				diskTargetPrefix = "h"
@@ -166,30 +166,30 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 			for nameID := 1; nameID <= maxIDCount; nameID++ {
 				// set new domain name
 				if maxIDCount == 1 {
-					newDomainName = prefix+name
+					newDomainName = prefix + name
 				} else {
 					_nameID := strconv.Itoa(nameID)
-					newDomainName = prefix+name+"-"+_nameID
+					newDomainName = prefix + name + "-" + _nameID
 				}
 
 				// clone domain
-				newDomainDiskFile := storagePoolPath+"/"+newDomainName+".qcow2"
+				newDomainDiskFile := storagePoolPath + "/" + newDomainName + ".qcow2"
 				log.Printf("Cloning new domain %s", newDomainName)
 				ret = mod.CloneDomain(original, newDomainName, newDomainDiskFile)
 				if ret != true {
-					errStatus := "fail to clone domain "+newDomainName
+					errStatus := "fail to clone domain " + newDomainName
 					log.Printf("Error: %s", errStatus)
 					result[newDomainName] = errStatus
 					continue
 				}
 
 				// set vcpu
-				vcpu := r.PostFormValue(group+"vcpu")
+				vcpu := r.PostFormValue(group + "vcpu")
 				if vcpu != "" {
 					log.Printf("Set %s vcpu to domain %s", vcpu, newDomainName)
 					ret = mod.SetDomainvCPU(newDomainName, vcpu)
 					if ret != true {
-						errStatus := "fail to set vcpu to "+vcpu
+						errStatus := "fail to set vcpu to " + vcpu
 						log.Printf("Error: %s", errStatus)
 						result[newDomainName] = errStatus
 						continue
@@ -197,12 +197,12 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 				}
 
 				// set ram size
-				ram := r.PostFormValue(group+"ram")
+				ram := r.PostFormValue(group + "ram")
 				if ram != "" {
 					log.Printf("Set %sG ram to domain %s", ram, newDomainName)
 					ret = mod.SetDomainMEM(newDomainName, ram)
 					if ret != true {
-						errStatus := "fail to set ram to "+ram+"G"
+						errStatus := "fail to set ram to " + ram + "G"
 						log.Printf("Error: %s", errStatus)
 						result[newDomainName] = errStatus
 						continue
@@ -213,20 +213,20 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 				log.Printf("Detach all network interface in %s", newDomainName)
 				ret = mod.DetachDomainInterface(newDomainName, "")
 				if ret != true {
-					errStatus := "fail to detach all interfaces in "+newDomainName
+					errStatus := "fail to detach all interfaces in " + newDomainName
 					log.Printf("Error: %s", errStatus)
 					result[newDomainName] = errStatus
 					continue
 				}
 				for intfNum := 1; intfNum <= maxInterfaceNum; intfNum++ {
 					strIntfNum := strconv.Itoa(intfNum)
-					intfFormNmae := group+"nic"+strIntfNum
+					intfFormNmae := group + "nic" + strIntfNum
 					intfNetwork := r.PostFormValue(intfFormNmae)
 					if intfNetwork != "" {
 						log.Printf("Attach %s to %s", intfNetwork, newDomainName)
 						ret = mod.AttachDomainInterface(newDomainName, intfDriver, intfNetwork)
 						if ret != true {
-							errStatus := "fail to attach interface to "+intfNetwork
+							errStatus := "fail to attach interface to " + intfNetwork
 							log.Printf("Error: %s", errStatus)
 							result[newDomainName] = errStatus
 							continue
@@ -237,26 +237,26 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 				// create data disk and attch to domain
 				for diskNum := 1; diskNum <= maxDiskNum; diskNum++ {
 					strDiskNum := strconv.Itoa(diskNum)
-					diskFormName := group+"disk"+strDiskNum+"-size"
+					diskFormName := group + "disk" + strDiskNum + "-size"
 					diskSize := r.PostFormValue(diskFormName)
 					if diskSize != "" {
 						strDiskNum := strconv.Itoa(diskNum)
-						diskName := newDomainName+".data-disk"+strDiskNum+".qcow2"
-						log.Printf("Create %sGB data disk to domain %s", 
-						    diskSize, newDomainName)						
+						diskName := newDomainName + ".data-disk" + strDiskNum + ".qcow2"
+						log.Printf("Create %sGB data disk to domain %s",
+							diskSize, newDomainName)
 						ret = mod.CreateDomainDisk(storagePoolName, diskName, diskSize+"G")
 						if ret != true {
-							errStatus := "fail to create data disk "+diskName
+							errStatus := "fail to create data disk " + diskName
 							log.Printf("Error: %s", errStatus)
 							result[newDomainName] = errStatus
 							continue
 						}
-						diskPath := storagePoolPath+"/"+diskName
-						diskTarget := diskTargetPrefix+diskNames[diskNum-1]
+						diskPath := storagePoolPath + "/" + diskName
+						diskTarget := diskTargetPrefix + diskNames[diskNum-1]
 						log.Printf("Attach %s data disk to domain %s", diskTarget, newDomainName)
 						ret = mod.AttachDomainDisk(newDomainName, diskPath, diskTarget)
 						if ret != true {
-							errStatus := "fail to attach data disk "+diskTarget
+							errStatus := "fail to attach data disk " + diskTarget
 							log.Printf("Error: %s", errStatus)
 							result[newDomainName] = errStatus
 							continue
@@ -286,7 +286,7 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", 500)
-	}	
+	}
 }
 
 func (d DomainController) Delete(w http.ResponseWriter, r *http.Request) {

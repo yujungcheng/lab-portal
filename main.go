@@ -31,7 +31,7 @@ func main() {
 	mux.HandleFunc("/domains/list-by-group", domainCtl.ListByGroup)
 	mux.HandleFunc("/domains/clone-page", domainCtl.GetClonePage)
 	mux.HandleFunc("/domains/clone", domainCtl.Clone)
-	
+
 	/*
 		mux.HandleFunc("/domains/delete-page", domainCtl.GetDeletePage)
 		mux.HandleFunc("/domains/delete", domainCtl.Delete)
