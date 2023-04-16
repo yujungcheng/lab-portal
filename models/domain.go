@@ -5,17 +5,10 @@ import (
 	"sort"
 	"strings"
 	"strconv"
-	"os/exec"
 	"path/filepath"
 	"libvirt.org/go/libvirt"
 	"libvirt.org/go/libvirtxml"
 )
-
-type DomainGroup struct {  // unused
-	GroupType string
-	GroupName string
-	Domains   []Domain
-}
 
 type Domain struct {
 	Name       string
@@ -102,7 +95,7 @@ func parserDescription(desc string) map[string]string {
 /* ------------------------------------------------------------------------ */
 
 func GetAllDomains(flag string) []Domain {
-	log.Println("Domain Model - get all domains")
+	log.Println("  Get all domains")
 
 	result := make([]Domain, 0)
 
@@ -128,7 +121,7 @@ func GetAllDomains(flag string) []Domain {
 				d.ID, _ = domain.GetID()
 			}
 
-			log.Printf("+ Retriving domain data (%s)", d.Name)
+			log.Printf("  - Retriving domain data (%s)", d.Name)
 
 			domainxml, _ := domain.GetXMLDesc(0)
 			domaincfg := &libvirtxml.Domain{}
@@ -198,7 +191,13 @@ func GetAllDomains(flag string) []Domain {
 	return result
 }
 
+// todo: make re-useable
+func GetDomainByName(domainName string) Domain {
+	return *new(Domain)
+}
+
 func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
+	log.Println("  Get all domains by group", groupBy)
 	var groupName string
 	var result = make(map[string][]Domain)
 
@@ -211,10 +210,9 @@ func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
 			storagePool, err := Conn.LookupStoragePoolByTargetPath(diskFileDir)
 			if err == nil && storagePool != nil {
 				groupName, _ = storagePool.GetName()
-				log.Printf("set storage pool %s as group name for %s", groupName, domain.Name)
 			} else {
 				log.Printf("Error: fail to get storage pool nmae for %s", domain.Name)
-				groupName = "*unknown pool name"
+				groupName = "*unknown"
 			}
 		} else if groupBy == "network" {
 			if len(domain.Interfaces) >= 1 {
@@ -226,98 +224,114 @@ func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
 			}
 			
 		}
-		log.Printf("+ Set %s as group name for %s", groupName, domain.Name)
+		log.Printf("  - Set '%s' as group name for %s", groupName, domain.Name)
 		result[groupName] = append(result[groupName], domain)
 	}
 	return result
 }
 
-func CreateDomains(spec map[string]string) map[string][]Domain {
-	var result = make(map[string][]Domain)
-	var sourceDomainName, newDomainName, newDomainFile string
-
-	log.Printf("+ Creating new domain, spec: %s", spec)
-	count, _ := strconv.Atoi(spec["count"])
-	for i := 1; i <= count; i++ {
-		index := strconv.Itoa(i)
-		if count == 1 {
-			newDomainName = spec["prefix"]+"-"+spec["name"]
-		} else {
-			newDomainName = spec["prefix"]+"-"+spec["name"]+"-"+index
-		}
-		storagePool := GetStoragePool(spec["storagePool"])
-		newDomainFile = storagePool.Path+"/"+newDomainName+".qcow2"
-		sourceDomainName = spec["bootDiskDomain"]	
-
-		log.Printf("  - Source Domain:%s, New Domain:%s, New Domain File:%s", sourceDomainName, newDomainName, newDomainFile)
-
-		// clone domain 
-		c := exec.Command("virt-clone", "--original", sourceDomainName, "--name", newDomainName, "--file", newDomainFile)
-		_, err := c.Output()
-		if err != nil {
-			log.Printf("Error: fail to clone domain. %s", err)
-			return result
-		}
-
-		// detach all network interface and then attach new interface
-		/* 
-		  assume only single interface attached, otherwise need use --mac option to remove all interface
-		  and the interface is network type.
-		*/
-		c = exec.Command("virsh", "detach-interface", "--persistent", "--domain", newDomainName, "--type", "network")
-		_, err = c.Output()
-		if err != nil {
-			log.Printf("Error: fail to remove interface. %s", err)
-			return result
-		}
-
-		// so far support attach "network" type interface only.
-		log.Printf("  - NIC Driver: %s", spec["nicDriver"])
-		if spec["nic1"] != "" {
-			log.Printf("  - NIC1: %s", spec["nic1"])
-			c = exec.Command("virsh", "attach-interface", "--persistent", "--type", "network",
-				"--domain", newDomainName, "--model", spec["nicDriver"], "--source", spec["nic1"])
-			_, err = c.Output()
-			if err != nil {
-				log.Printf("Error: fail to add nic1. %s", err)
-				return result
-			}
-		}
-		if spec["nic2"] != "" {
-			log.Printf("  - NIC2: %s", spec["nic2"])
-			c = exec.Command("virsh", "attach-interface", "--persistent", "--type", "network",
-				"--domain", newDomainName, "--model", spec["nicDriver"], "--source", spec["nic2"])
-			_, err = c.Output()
-			if err != nil {
-				log.Printf("Error: fail to add nic2. %s", err)
-				return result
-			}
-		}
-		if spec["nic3"] != "" {
-			log.Printf("  - NIC3: %s", spec["nic3"])
-			c = exec.Command("virsh", "attach-interface", "--persistent", "--type", "network",
-				"--domain", newDomainName,  "--model", spec["nicDriver"], "--source", spec["nic3"])
-			_, err = c.Output()
-			if err != nil {
-				log.Printf("Error: fail to add nic3. %s", err)
-				return result
-			}
-		}
-
-		// create and attach data disk
-		log.Printf("  - Disk Bus: %s", spec["diskBus"])
-		if spec["disk2Size"] != "" {
-			log.Printf("  - Disk2: %s", spec["disk2Size"])
-		}
-		if spec["disk3Size"] != "" {
-			log.Printf("  - Disk3: %s", spec["disk3Size"])
-		}
-		if spec["disk4Size"] != "" {
-			log.Printf("  - Disk4: %s", spec["disk4Size"])
-		}
-		//c = exec.Command()
-
+func CloneDomain(orgDomainName, newDomainName, newDomainDiskFile string) bool {
+	if Debug == true {
+		log.Println("  - virt-clone", "--quiet", "--original", orgDomainName, "--name", newDomainName, "--file", newDomainDiskFile)
 	}
+	args := []string{"--quiet", "--original", orgDomainName, "--name", newDomainName, "--file", newDomainDiskFile}
+	_, err := RunCommand("virt-clone", args...)
+	if err != nil {
+		return false
+	} else {
+		// overwrite description
+		_, err = RunVirsh("desc", newDomainName, "original domain", orgDomainName)
+		if err != nil {
+			return false
+		}
+		return true
+	}
+}
 
-	return result
+func SetDomainvCPU(domainName, vcpuNumber string) bool {
+	if Debug == true {
+		log.Println("  - virsh", "setvcpus", "--current", domainName, vcpuNumber)
+	}
+	_, err := RunVirsh("setvcpus", "--current", domainName, vcpuNumber)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func SetDomainMEM(domainName, ramSize string) bool {
+	intSize, _ := strconv.Atoi(ramSize)
+	kbSize := intSize * 1024 * 1024  // convert ramSize GB to KB
+	strSize := strconv.Itoa(kbSize)
+	if Debug == true {
+		log.Println("  - virsh", "setmem", "--current", domainName, strSize)
+	}
+	_, err := RunVirsh("setmem", "--current", domainName, strSize)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func CreateDomainDisk(diskPoolName, diskName, diskSize string) bool {
+	if Debug == true {
+		log.Println("  - virsh", "vol-create-as", "--format", "qcow2", "--prealloc-metadata", "--pool", diskPoolName, "--name", diskName, "--capacity", diskSize)
+	}
+	_, err := RunVirsh("vol-create-as", "--format", "qcow2", "--prealloc-metadata",
+	    "--pool", diskPoolName, "--name", diskName, "--capacity", diskSize)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func AttachDomainDisk(domainName, diskPath, diskTarget string) bool {
+	if Debug == true {
+		log.Println("  - virsh", "attach-disk", "--persistent", domainName, "--source", diskPath, "--target", diskTarget)
+	}
+	_, err := RunVirsh("attach-disk", "--persistent", domainName,
+		"--source", diskPath, "--target", diskTarget)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func DetachDomainInterface(domainName, interfaceMac string) bool {
+	var err error  // err := error(nil)
+	if interfaceMac != "" {
+		if Debug == true {
+			log.Println("  - virsh", "detach-interface", "--persistent", "--type", "network", "--domain", domainName, "--mac", interfaceMac)
+		}
+		_, err = RunVirsh("detach-interface", "--persistent", "--type", "network", 
+		"--domain", domainName, "--mac", interfaceMac)
+	} else {
+		if Debug == true {
+			log.Println("  - virsh", "detach-interface", "--persistent", "--type", "network", "--domain", domainName)
+		}
+		_, err = RunVirsh("detach-interface", "--persistent", "--type", "network", 
+		"--domain", domainName)
+	}
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func AttachDomainInterface(domainName, intfDriver, networkName string) bool {
+	if Debug == true {
+		log.Println("  - virsh", "attach-interface", "--persistent", "--type", "network", "--domain", domainName, "--model", intfDriver, "--source", networkName)
+	}
+	_, err := RunVirsh("attach-interface", "--persistent", "--type", "network",
+	    "--domain", domainName, "--model", intfDriver, "--source", networkName)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
 }

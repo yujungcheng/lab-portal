@@ -35,6 +35,7 @@ type Network struct {
 /* ------------------------------------------------------------------------ */
 
 func GetAllNetworks() []Network {
+	log.Println("  Get all networks")
 	result := make([]Network, 0)
 
 	fg := libvirt.CONNECT_LIST_NETWORKS_PERSISTENT
@@ -51,7 +52,7 @@ func GetAllNetworks() []Network {
 			n.IsActive, _ = network.IsActive()
 			n.IsPersistent, _ = network.IsPersistent()
 
-			log.Printf("+ Retriving network data (%s)", n.Name)
+			log.Printf("  - Retriving network data (%s)", n.Name)
 
 			networkxml, _ := network.GetXMLDesc(0)
 			networkcfg := &libvirtxml.Network{}

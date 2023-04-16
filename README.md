@@ -54,6 +54,8 @@ https://pkg.go.dev/libvirt.org/libvirt-go-xml
 
 https://pkg.go.dev/libvirt.org/go/libvirt
 https://pkg.go.dev/libvirt.org/go/libvirtxml
+
+https://www.cyberciti.biz/faq/how-to-add-disk-image-to-kvm-virtual-machine-with-virsh-command/
 ```
 
 

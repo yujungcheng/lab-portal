@@ -16,13 +16,13 @@ type Template struct {
 
 
 func GetAllTemplates() []Template {
+	log.Println("  Get all templates")
 	result := make([]Template, 0)
-
 	// get template from domain template group
 	domainGroups := GetAllDomainsByGroup("persistent", "group")
 	templateDomains := domainGroups["template"]
 	for _, template := range templateDomains {
-		log.Printf("+ Retriving template data (%s)", template.Name)
+		log.Printf("  - Retriving template data (%s)", template.Name)
 		if len(template.Disks) >= 1 {
 			t := new(Template)
 			t.UUID = template.UUID
@@ -30,7 +30,7 @@ func GetAllTemplates() []Template {
 			t.BootVolumeFile = template.Disks[0]["file"]
 			result = append(result, *t)
 		} else {
-			log.Printf("  - domain %s does not have boot disk", template.Name)
+			log.Printf("Warning: domain %s does not have boot disk", template.Name)
 			continue
 		}
 	}

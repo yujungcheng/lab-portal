@@ -1,13 +1,27 @@
 {{ define "content" }}
 
 <div>
-    <p><h1>Create New Domain(s)</h1></p>
-    <form method="POST" action="/domains/create">
+    <p><h1>Clone Domain(s)</h1></p>
+    <form method="POST" action="/domains/clone">
 
-        <label>[ Group Domain One ]</label>
+        <label>[ Group 1 ]</label>
         <br/><br/>
 
         <table>
+            <tr>
+                <td>
+                    <label>Source Domain:</label>
+                    <select id="group1-original-domain" name="group1-original-domain">
+                    {{ range $k, $v := .Templates }}
+                        <option value="{{ $v.Name }}">{{ $v.Name }}</option>
+                    {{ end }}
+                    </select>
+                </td>
+                <td>
+
+                </td>
+            </tr>
+
             <tr>
                 <td>
                     <label>Prefix:</label>
@@ -16,14 +30,16 @@
                     <input name="group1-name" type="text" value="" />
                     <label><b>vCPU:</b></label>
                     <select id="group1-vcpu" name="group1-vcpu" >
-                        <option value="1" selected="selected">&nbsp;1&nbsp;</option>
+                        <option value="" selected="selected"></option>
+                        <option value="1">&nbsp;1&nbsp;</option>
                         <option value="2">&nbsp;2&nbsp;</option>
                         <option value="3">&nbsp;3&nbsp;</option>
                         <option value="4">&nbsp;4&nbsp;</option>
                     </select>&nbsp;&nbsp;
                     <label><b>RAM:</b></label>
                     <select id="group1-ram" name="group1-ram" >
-                        <option value="1" selected="selected">&nbsp;1GB&nbsp;</option>
+                        <option value="" selected="selected"></option>
+                        <option value="1">&nbsp;1GB&nbsp;</option>
                         <option value="2">&nbsp;2GB&nbsp;</option>
                         <option value="4">&nbsp;4GB&nbsp;</option>
                         <option value="8">&nbsp;8GB&nbsp;</option>
@@ -45,6 +61,8 @@
         <br/>
 
         <table>
+
+
             <tr>
                 <td>
                     <label>Disk Bus:</label>
@@ -63,23 +81,9 @@
                         {{ end }}
                     {{ end }}
                     </select>
-                </td>
-                <td>
-
-                </td>
-            </tr>
-
-            <tr>
-                <td>
-                    <label>Source Boot Disk Domain:</label>
-                    <select id="group1-boot-disk-domain" name="group1-boot-disk-domain">
-                    {{ range $k, $v := .Templates }}
-                        <option value="{{ $v.Name }}">{{ $v.Name }}</option>
-                    {{ end }}
-                    </select>
                     &nbsp;|&nbsp;
-                    <label>Disk#2:</label>
-                    <select id="group1-disk2-size" name="group1-disk2-size" >
+                    <label>Data Disk #1:</label>
+                    <select name="group1-disk1-size" >
                         <option value="" selected="selected">&nbsp;&nbsp;</option>
                         <option value="1">&nbsp;1&nbsp;</option>
                         <option value="2">&nbsp;2&nbsp;</option>
@@ -88,9 +92,9 @@
                         <option value="16">&nbsp;16&nbsp;</option>
                         <option value="32">&nbsp;32&nbsp;</option>
                     </select> GB
-                    &nbsp;|&nbsp;
-                    <label>Disk#3:</label>
-                    <select id="group1-disk2-size" name="group1-disk3-size" >
+                    &nbsp;&nbsp;
+                    <label>#2:</label>
+                    <select name="group1-disk2-size" >
                         <option value="" selected="selected">&nbsp;&nbsp;</option>
                         <option value="1">&nbsp;1&nbsp;</option>
                         <option value="2">&nbsp;2&nbsp;</option>
@@ -99,9 +103,9 @@
                         <option value="16">&nbsp;16&nbsp;</option>
                         <option value="32">&nbsp;32&nbsp;</option>
                     </select> GB
-                    &nbsp;|&nbsp;
-                    <label>Disk#4:</label>
-                    <select id="group1-disk2-size" name="group1-disk4-size" >
+                    &nbsp;&nbsp;
+                    <label>#3:</label>
+                    <select name="group1-disk3-size" >
                         <option value="" selected="selected">&nbsp;&nbsp;</option>
                         <option value="1">&nbsp;1&nbsp;</option>
                         <option value="2">&nbsp;2&nbsp;</option>
@@ -130,8 +134,8 @@
                         <option value="e1000">e1000</option>
                     </select>
                     &nbsp;|&nbsp;
-                    <label>NIC#1:</label>
-                    <select id="group1-nic1" name="group1-nic1">
+                    <label>Network Interface #1:</label>
+                    <select name="group1-nic1">
                     {{ range $k, $v := .Networks }}
                         {{ if eq $v.Name "default" }}
                         <option value="{{ $v.Name }}" selected="selected">{{ $v.Name }}</option>
@@ -140,17 +144,17 @@
                         {{ end }}
                     {{ end }}
                     </select>
-                    &nbsp;|&nbsp;
-                    <label>NIC#2:</label>
-                    <select id="group1-nic2" name="group1-nic2">
+                    &nbsp;&nbsp;
+                    <label>#2:</label>
+                    <select name="group1-nic2">
                     <option value="" selected="selected"></option>
                     {{ range $k, $v := .Networks }}
                         <option value="{{ $v.Name }}">{{ $v.Name }}</option>
                     {{ end }}
                     </select>
-                    &nbsp;|&nbsp;
-                    <label>Nic#3:</label>
-                    <select id="group1-nic3" name="group1-nic3">
+                    &nbsp;&nbsp;
+                    <label>#3:</label>
+                    <select name="group1-nic3">
                     <option value="" selected="selected"></option>
                     {{ range $k, $v := .Networks }}
                         <option value="{{ $v.Name }}">{{ $v.Name }}</option>
@@ -165,7 +169,7 @@
         </table>
 
         <hr/>
-        <label>[ Group Domain Two ]</label>
+        <label>[ Group 2 ]</label>
 
 
         <hr/>

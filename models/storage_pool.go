@@ -41,6 +41,7 @@ func GetStoragePoolStateStr(state libvirt.StoragePoolState) string {
 /* ------------------------------------------------------------------------ */
 
 func GetAllStoragePools() []StoragePool {
+	log.Println("  Get all storage pools")
 	result := make([]StoragePool, 0)
 
 	pools, err := Conn.ListAllStoragePools(0)
@@ -60,7 +61,7 @@ func GetAllStoragePools() []StoragePool {
 			s.Allocation = info.Allocation
 			s.Available = info.Available
 
-			log.Printf("+ Retriving storage pool data (%s)", s.Name)
+			log.Printf("  - Retriving storage pool data (%s)", s.Name)
 
 			storagePoolxml, _ := pool.GetXMLDesc(0)
 			storagePoolcfg := &libvirtxml.StoragePool{}
@@ -79,8 +80,9 @@ func GetAllStoragePools() []StoragePool {
 	return result
 }
 
-func GetStoragePool(name string) StoragePool {
-	pool, _ := Conn.LookupStoragePoolByName(name)
+func GetStoragePool(poolName string) StoragePool {
+	log.Println("  Get storage pool", poolName)
+	pool, _ := Conn.LookupStoragePoolByName(poolName)
 	s := new(StoragePool)
 	s.Name, _ = pool.GetName()
 	s.UUID, _ = pool.GetUUIDString()
@@ -93,7 +95,7 @@ func GetStoragePool(name string) StoragePool {
 	s.Allocation = info.Allocation
 	s.Available = info.Available
 
-	log.Printf("+ Retriving storage pool data (%s)", s.Name)
+	log.Printf("  - Retriving storage pool data (%s)", s.Name)
 
 	storagePoolxml, _ := pool.GetXMLDesc(0)
 	storagePoolcfg := &libvirtxml.StoragePool{}

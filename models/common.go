@@ -18,12 +18,15 @@ import (
 var StartTime time.Time
 var ProcessID int
 var Conn libvirt.Connect
+var Debug bool
 
 func SetStartTime() { StartTime = time.Now() }
 
 func SetProcessID() { ProcessID = os.Getpid() }
 
 func SetLibvirtConnect(conn libvirt.Connect) { Conn = conn }
+
+func SetDebug(enabled bool) { Debug = enabled }
 
 /* functions
 ------------------------------------------------------------- */
@@ -106,12 +109,28 @@ func ConvertNetmaskToNumber(mask string) int {
 	return sz
 }
 
-func RunVirsh(args ... string) error {
-	c := exec.Command("virsh", strings.Join(args, " "))
+func RunVirsh(args... string) (string, error) {
+	c := exec.Command("virsh", args...)
 	out, err := c.Output()
+	/*
 	if err != nil {
-		log.Printf("Error: %s", err)
+		log.Printf("    RunVirsh Error: %s", err)
+	} else {
+		log.Printf("    RunVirsh Output: %s", out)
 	}
-	log.Printf("Command output: %s", out)
-	return err
+	*/	
+	return string(out), err
+}
+
+func RunCommand(cmd string, args... string) (string, error) {
+	c := exec.Command(cmd, args...)
+	out, err := c.Output()
+	/*
+	if err != nil {
+		log.Printf("    RunCommand Error: %s", err)
+	} else {
+		log.Printf("    RunCommand Output: %s", out)
+	}
+	*/
+	return string(out), err
 }

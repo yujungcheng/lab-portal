@@ -1,10 +1,11 @@
 package controller
 
 import (
+	"log"
+	"strconv"
+	"net/http"
 	"html/template"
 	mod "lab-portal/models"
-	"log"
-	"net/http"
 )
 
 type DomainList struct {
@@ -12,15 +13,16 @@ type DomainList struct {
 	DomainsByGroup map[string][]mod.Domain
 }
 
-type DomainCreate struct {
+type DomainClone struct {
+	Templates    []mod.Template  // original domain
 	StoragePools []mod.StoragePool
 	Networks     []mod.Network
-	Templates    []mod.Template
 }
 
 type DomainController struct {
 	AllDomains DomainList
-	CreateForm DomainCreate
+	CloneForm DomainClone
+	CloneResult map[string]string
 }
 
 func (d DomainController) List(w http.ResponseWriter, r *http.Request) {
@@ -89,14 +91,14 @@ func (d DomainController) ListByGroup(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (d DomainController) GetCreatePage(w http.ResponseWriter, r *http.Request) {
-	log.Println("Controller - load domain create page")
+func (d DomainController) GetClonePage(w http.ResponseWriter, r *http.Request) {
+	log.Println("Controller - load domain clone page")
 
 	storagePools := mod.GetAllStoragePools()
 	networks := mod.GetAllNetworks()
 	templates := mod.GetAllTemplates()
 
-	d.CreateForm = DomainCreate{
+	d.CloneForm = DomainClone{
 		StoragePools: storagePools,
 		Networks: networks,
 		Templates: templates,
@@ -105,55 +107,186 @@ func (d DomainController) GetCreatePage(w http.ResponseWriter, r *http.Request) 
 	tplFiles := []string{
 		"templates/portal.tpl",
 		"templates/base.tpl",
-		"templates/domain_create_page.tpl",
+		"templates/domain_clone_page.tpl",
 	}
 	tpl, err := template.ParseFiles(tplFiles...)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", 500)
 	}
-	err = tpl.Execute(w, d.CreateForm)
+	err = tpl.Execute(w, d.CloneForm)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Internal Server Error", 500)
 	}
 }
 
-func (d DomainController) Create(w http.ResponseWriter, r *http.Request) {
-	log.Println("Controller - create domains")
+func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
+	log.Println("Controller - clone domains")
+	const maxGroupID = 1
+	const maxInterfaceNum = 3
+	const maxDiskNum = 3
+
+	result := make(map[string]string)
+
 	if err := r.ParseForm(); err != nil {
 		log.Printf("Error: %s", err)
 	} else {
-		group1 := map[string]string{}
-		group1["prefix"] = r.PostFormValue("group1-prefix")
-		group1["name"] = r.PostFormValue("group1-name")
-		group1["vcpu"] = r.PostFormValue("group1-vcpu")
-		group1["ram"] = r.PostFormValue("group1-ram")
-		group1["count"] = r.PostFormValue("group1-count")
+		var newDomainName string
+		for groupID := 1; groupID <= maxGroupID; groupID++ {
+			strGroupID := strconv.Itoa(groupID)
+			group := "group"+strGroupID+"-"
 
-		group1["diskBus"] = r.PostFormValue("group1-disk-bus")
-		group1["storagePool"] = r.PostFormValue("group1-storage-pool")
-		group1["bootDiskDomain"] = r.PostFormValue("group1-boot-disk-domain")
-		group1["disk2Size"] = r.PostFormValue("group1-disk2-size")
-		group1["disk3Size"] = r.PostFormValue("group1-disk3-size")
-		group1["disk4Size"] = r.PostFormValue("group1-disk4-size")
+			original := r.PostFormValue("group1-original-domain")
+			name := r.PostFormValue(group+"name")
+			count := r.PostFormValue(group+"count")
+			maxIDCount, _ := strconv.Atoi(count)
 
-		group1["nicDriver"] = r.PostFormValue("group1-nic-driver")
-		group1["nic1"] = r.PostFormValue("group1-nic1")
-		group1["nic2"] = r.PostFormValue("group1-nic2")
-		group1["nic3"] = r.PostFormValue("group1-nic3")
+			prefix := r.PostFormValue(group+"prefix")
+			if prefix != "" {
+				prefix = prefix+"-"
+			}
 
-		// clone domain
-		_ = mod.CreateDomains(group1)
+			storagePoolName := r.PostFormValue(group+"storage-pool")
+			storagePool := mod.GetStoragePool(storagePoolName)
+			storagePoolPath := storagePool.Path
 
-		//todo: update vCPU and RAM
+			diskNames := []string{"db", "dc", "dd", "de", "df", "dg"}
+			diskBus := r.PostFormValue(group+"disk-bus")
+			diskTargetPrefix := "v"
+			if diskBus == "ide" {
+				diskTargetPrefix = "h"
+			} else if diskBus == "sata" {
+				diskTargetPrefix = "s"
+			}
 
-		//todo: create data volume and attch to domain
+			intfDriver := r.PostFormValue("group1-nic-driver")
 
-		//todo: attach interface and attach to domain
+			var ret bool
+			for nameID := 1; nameID <= maxIDCount; nameID++ {
+				// set new domain name
+				if maxIDCount == 1 {
+					newDomainName = prefix+name
+				} else {
+					_nameID := strconv.Itoa(nameID)
+					newDomainName = prefix+name+"-"+_nameID
+				}
+
+				// clone domain
+				newDomainDiskFile := storagePoolPath+"/"+newDomainName+".qcow2"
+				log.Printf("Cloning new domain %s", newDomainName)
+				ret = mod.CloneDomain(original, newDomainName, newDomainDiskFile)
+				if ret != true {
+					errStatus := "fail to clone domain "+newDomainName
+					log.Printf("Error: %s", errStatus)
+					result[newDomainName] = errStatus
+					continue
+				}
+
+				// set vcpu
+				vcpu := r.PostFormValue(group+"vcpu")
+				if vcpu != "" {
+					log.Printf("Set %s vcpu to domain %s", vcpu, newDomainName)
+					ret = mod.SetDomainvCPU(newDomainName, vcpu)
+					if ret != true {
+						errStatus := "fail to set vcpu to "+vcpu
+						log.Printf("Error: %s", errStatus)
+						result[newDomainName] = errStatus
+						continue
+					}
+				}
+
+				// set ram size
+				ram := r.PostFormValue(group+"ram")
+				if ram != "" {
+					log.Printf("Set %sG ram to domain %s", ram, newDomainName)
+					ret = mod.SetDomainMEM(newDomainName, ram)
+					if ret != true {
+						errStatus := "fail to set ram to "+ram+"G"
+						log.Printf("Error: %s", errStatus)
+						result[newDomainName] = errStatus
+						continue
+					}
+				}
+
+				// attach interface to domain
+				log.Printf("Detach all network interface in %s", newDomainName)
+				ret = mod.DetachDomainInterface(newDomainName, "")
+				if ret != true {
+					errStatus := "fail to detach all interfaces in "+newDomainName
+					log.Printf("Error: %s", errStatus)
+					result[newDomainName] = errStatus
+					continue
+				}
+				for intfNum := 1; intfNum <= maxInterfaceNum; intfNum++ {
+					strIntfNum := strconv.Itoa(intfNum)
+					intfFormNmae := group+"nic"+strIntfNum
+					intfNetwork := r.PostFormValue(intfFormNmae)
+					if intfNetwork != "" {
+						log.Printf("Attach %s to %s", intfNetwork, newDomainName)
+						ret = mod.AttachDomainInterface(newDomainName, intfDriver, intfNetwork)
+						if ret != true {
+							errStatus := "fail to attach interface to "+intfNetwork
+							log.Printf("Error: %s", errStatus)
+							result[newDomainName] = errStatus
+							continue
+						}
+					}
+				}
+
+				// create data disk and attch to domain
+				for diskNum := 1; diskNum <= maxDiskNum; diskNum++ {
+					strDiskNum := strconv.Itoa(diskNum)
+					diskFormName := group+"disk"+strDiskNum+"-size"
+					diskSize := r.PostFormValue(diskFormName)
+					if diskSize != "" {
+						strDiskNum := strconv.Itoa(diskNum)
+						diskName := newDomainName+".data-disk"+strDiskNum+".qcow2"
+						log.Printf("Create %sGB data disk to domain %s", 
+						    diskSize, newDomainName)						
+						ret = mod.CreateDomainDisk(storagePoolName, diskName, diskSize+"G")
+						if ret != true {
+							errStatus := "fail to create data disk "+diskName
+							log.Printf("Error: %s", errStatus)
+							result[newDomainName] = errStatus
+							continue
+						}
+						diskPath := storagePoolPath+"/"+diskName
+						diskTarget := diskTargetPrefix+diskNames[diskNum-1]
+						log.Printf("Attach %s data disk to domain %s", diskTarget, newDomainName)
+						ret = mod.AttachDomainDisk(newDomainName, diskPath, diskTarget)
+						if ret != true {
+							errStatus := "fail to attach data disk "+diskTarget
+							log.Printf("Error: %s", errStatus)
+							result[newDomainName] = errStatus
+							continue
+						}
+					}
+				}
+
+				// update group in description
+
+				log.Printf("Cloned new domain %s successfully", newDomainName)
+				result[newDomainName] = "created successfully"
+			}
+		}
 	}
 
-	//d.GetCreatePage(w, r)
+	tplFiles := []string{
+		"templates/portal.tpl",
+		"templates/base.tpl",
+		"templates/domain_clone_result.tpl",
+	}
+	tpl, err := template.ParseFiles(tplFiles...)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", 500)
+	}
+	err = tpl.Execute(w, result)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", 500)
+	}	
 }
 
 func (d DomainController) Delete(w http.ResponseWriter, r *http.Request) {

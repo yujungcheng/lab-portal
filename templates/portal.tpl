@@ -112,7 +112,7 @@
                 <a href="/domains">Domains</a>
             </button> |
             <div class="dropdown-content">
-                <a href="/domains/create-page">[ Create Domain ]</a>
+                <a href="/domains/clone-page">[ Clone Domain ]</a>
                 <a href="/domains/delete-page">[ Delete Domain ]</a>
                 <a href="/domains/update-page">[ Update Domain ]</a>
                 <a href="/domains/backup-page">[ Backup Domain ]</a>
