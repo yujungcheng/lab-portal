@@ -103,3 +103,23 @@ func GetStoragePool(poolName string) StoragePool {
 	s.Path = storagePoolcfg.Target.Path
 	return *s
 }
+
+func CreateStoragePool(poolName, poolPath string) bool {
+	if Debug == true {
+		log.Println("  - virsh", "pool-create-as", "--type", "dir", "--name", poolName, "--target", poolPath)
+	}
+	_, err := RunVirsh("pool-create-as", "--type", "dir",
+		"--name", poolName, "--target", poolPath)
+	if err != nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+func DeleteStoragePool(poolName string) bool {
+	if Debug == true {
+	}
+
+	return false
+}

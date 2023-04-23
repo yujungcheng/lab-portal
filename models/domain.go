@@ -71,6 +71,7 @@ func GetFlag(flag string) libvirt.ConnectListAllDomainsFlags {
 	return fg
 }
 
+// todo: use json string
 func parserDescription(desc string) map[string]string {
 	result := map[string]string{
 		"group":     "default", // default group
@@ -239,7 +240,7 @@ func CloneDomain(orgDomainName, newDomainName, newDomainDiskFile string) bool {
 	if err != nil {
 		return false
 	} else {
-		// overwrite description
+		// overwrite description, todo: move to a function
 		_, err = RunVirsh("desc", newDomainName, "original domain", orgDomainName)
 		if err != nil {
 			return false
@@ -275,6 +276,7 @@ func SetDomainMEM(domainName, ramSize string) bool {
 	}
 }
 
+// this should move to volume.go
 func CreateDomainDisk(diskPoolName, diskName, diskSize string) bool {
 	if Debug == true {
 		log.Println("  - virsh", "vol-create-as", "--format", "qcow2", "--prealloc-metadata", "--pool", diskPoolName, "--name", diskName, "--capacity", diskSize)
@@ -288,12 +290,13 @@ func CreateDomainDisk(diskPoolName, diskName, diskSize string) bool {
 	}
 }
 
-func AttachDomainDisk(domainName, diskPath, diskTarget string) bool {
+func AttachDomainDisk(domainName, diskPath, diskTarget, diskTargetBus, diskDriverType string) bool {
+
 	if Debug == true {
-		log.Println("  - virsh", "attach-disk", "--persistent", domainName, "--source", diskPath, "--target", diskTarget)
+		log.Println("  - virsh", "attach-disk", "--persistent", domainName, "--source", diskPath, "--target", diskTarget, "--subdriver", diskDriverType, "--targetbus", diskTargetBus)
 	}
 	_, err := RunVirsh("attach-disk", "--persistent", domainName,
-		"--source", diskPath, "--target", diskTarget)
+		"--source", diskPath, "--target", diskTarget, "--subdriver", diskDriverType, "--targetbus", diskTargetBus)
 	if err != nil {
 		return false
 	} else {

@@ -110,6 +110,8 @@ func ConvertNetmaskToNumber(mask string) int {
 }
 
 func RunVirsh(args ...string) (string, error) {
+	// todo: log command if debug true
+
 	c := exec.Command("virsh", args...)
 	out, err := c.Output()
 	/*
@@ -123,6 +125,8 @@ func RunVirsh(args ...string) (string, error) {
 }
 
 func RunCommand(cmd string, args ...string) (string, error) {
+	// todo: log command if debug true
+
 	c := exec.Command(cmd, args...)
 	out, err := c.Output()
 	/*

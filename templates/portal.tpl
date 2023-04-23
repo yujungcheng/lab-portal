@@ -109,11 +109,10 @@
 
         <div class="dropdown">
             <button class="dropbtn">
-                <a href="/domains">Domains</a>
+                <a href="/domains">List Domains</a>
             </button> |
             <div class="dropdown-content">
                 <a href="/domains/clone-page">[ Clone Domain ]</a>
-                <a href="/domains/delete-page">[ Delete Domain ]</a>
                 <a href="/domains/update-page">[ Update Domain ]</a>
                 <a href="/domains/backup-page">[ Backup Domain ]</a>
             </div>
