@@ -106,82 +106,8 @@ func GetAllDomains(flag string) []Domain {
 		log.Printf("Error: fail to get all domains")
 	} else {
 		for _, domain := range domains {
-			d := new(Domain)
-			info, _ := domain.GetInfo()
-			d.Name, _ = domain.GetName()
-			d.UUID, _ = domain.GetUUIDString()
-			d.MaxMem = info.MaxMem
-			d.MaxMemStr = ConvertSizeToString(info.MaxMem*1024, "GB")
-			d.Memory = info.Memory
-			d.MemoryStr = ConvertSizeToString(info.Memory*1024, "GB")
-			d.Vcpu = info.NrVirtCpu
-			d.CpuTime = info.CpuTime
-			d.State = int(info.State) // libvirt.DomainState
-			d.StateStr = GetDomainStateStr(info.State)
-			if info.State == 1 || info.State == 3 {
-				d.ID, _ = domain.GetID()
-			}
-
-			log.Printf("  - Retriving domain data (%s)", d.Name)
-
-			domainxml, _ := domain.GetXMLDesc(0)
-			domaincfg := &libvirtxml.Domain{}
-			_ = domaincfg.Unmarshal(domainxml)
-
-			var diskCapacity, diskAllocation, diskPhysical string
-			var disks = []map[string]string{}
-			for _, disk := range domaincfg.Devices.Disks {
-				if disk.Device == "disk" {
-					blockInfo, err := domain.GetBlockInfo(disk.Target.Dev, 0)
-					if err != nil {
-						log.Printf("Error: fail to get disk %s info", disk.Target.Dev)
-					} else {
-						diskCapacity = ConvertSizeToString(blockInfo.Capacity, "GB")
-						diskAllocation = ConvertSizeToString(blockInfo.Allocation, "GB")
-						diskPhysical = ConvertSizeToString(blockInfo.Physical, "GB")
-					}
-					// todo: get storage pool of disk
-					d := map[string]string{
-						"name":        disk.Target.Dev,
-						"file":        disk.Source.File.File,
-						"capacity":    diskCapacity,
-						"allocation":  diskAllocation,
-						"physical":    diskPhysical,
-						"storagePool": "",
-					}
-					disks = append(disks, d)
-				} else if disk.Device == "cdrom" {
-					log.Printf("  - disk %s is CDROM", disk.Target.Dev)
-				}
-			}
-			d.Disks = disks
-
-			var intfType, intfTypeNmae, intfTargetDev string
-			var intfs = []map[string]string{}
-			for _, intf := range domaincfg.Devices.Interfaces {
-				if intf.Source.Network != nil {
-					intfType = "Network"
-					intfTypeNmae = intf.Source.Network.Network
-				} else if intf.Source.Bridge != nil {
-					intfType = "Bridge"
-					intfTypeNmae = intf.Source.Bridge.Bridge
-				}
-				if intf.Target != nil {
-					intfTargetDev = intf.Target.Dev
-				}
-				i := map[string]string{
-					"mac":    intf.MAC.Address, //"mac": intf.MAC.Address[9:],
-					"name":   intfTypeNmae,
-					"type":   intfType,
-					"target": intfTargetDev,
-				}
-				intfs = append(intfs, i)
-			}
-			d.Interfaces = intfs
-
-			// parser metadata from desc
-			d.Metadata = parserDescription(domaincfg.Description)
-			result = append(result, *d)
+			d := GetDomain(domain)
+			result = append(result, d)
 			domain.Free()
 		}
 	}
@@ -192,9 +118,108 @@ func GetAllDomains(flag string) []Domain {
 	return result
 }
 
-// todo: make re-useable
-func GetDomainByName(domainName string) Domain {
-	return *new(Domain)
+func GetDomainByName(domainName string) (Domain, error) {
+	log.Printf("  Get domain by name (%s)", domainName)
+	var d Domain
+	domain, err := Conn.LookupDomainByName(domainName)
+	if err != nil {
+		log.Printf("Error: faile to lookup domain %s. %s", domainName, err)
+		return d, err
+	}
+	d = GetDomain(*domain)
+	return d, err
+}
+
+func GetDomainByUUID(domainUUID string) (Domain, error) {
+	log.Printf("  Get domain by UUID (%s)", domainUUID)
+	var d Domain
+	domain, err := Conn.LookupDomainByUUIDString(domainUUID)
+	if err != nil {
+		log.Printf("Error: faile to lookup domain %s. %s", domainUUID, err)
+		return d, err
+	}
+	d = GetDomain(*domain)
+	return d, err
+}
+
+func GetDomain(domain libvirt.Domain) Domain {
+	var d Domain
+	info, _ := domain.GetInfo()
+	d.Name, _ = domain.GetName()
+	d.UUID, _ = domain.GetUUIDString()
+	d.MaxMem = info.MaxMem
+	d.MaxMemStr = ConvertSizeToString(info.MaxMem*1024, "GB")
+	d.Memory = info.Memory
+	d.MemoryStr = ConvertSizeToString(info.Memory*1024, "GB")
+	d.Vcpu = info.NrVirtCpu
+	d.CpuTime = info.CpuTime
+	d.State = int(info.State) // libvirt.DomainState
+	d.StateStr = GetDomainStateStr(info.State)
+	if info.State == 1 || info.State == 3 {
+		d.ID, _ = domain.GetID()
+	}
+
+	log.Printf("  - Retriving domain data (%s)", d.Name)
+
+	domainxml, _ := domain.GetXMLDesc(0)
+	domaincfg := &libvirtxml.Domain{}
+	_ = domaincfg.Unmarshal(domainxml)
+
+	var diskCapacity, diskAllocation, diskPhysical string
+	var disks = []map[string]string{}
+	for _, disk := range domaincfg.Devices.Disks {
+		if disk.Device == "disk" {
+			blockInfo, err := domain.GetBlockInfo(disk.Target.Dev, 0)
+			if err != nil {
+				log.Printf("Error: fail to get disk %s info", disk.Target.Dev)
+			} else {
+				diskCapacity = ConvertSizeToString(blockInfo.Capacity, "GB")
+				diskAllocation = ConvertSizeToString(blockInfo.Allocation, "GB")
+				diskPhysical = ConvertSizeToString(blockInfo.Physical, "GB")
+			}
+			// todo: get storage pool of disk
+			d := map[string]string{
+				"name":        disk.Target.Dev,
+				"file":        disk.Source.File.File,
+				"capacity":    diskCapacity,
+				"allocation":  diskAllocation,
+				"physical":    diskPhysical,
+				"storagePool": "",
+			}
+			disks = append(disks, d)
+		} else if disk.Device == "cdrom" {
+			log.Printf("  - disk %s is CDROM", disk.Target.Dev)
+		}
+	}
+	d.Disks = disks
+
+	var intfType, intfTypeNmae, intfTargetDev string
+	var intfs = []map[string]string{}
+	for _, intf := range domaincfg.Devices.Interfaces {
+		if intf.Source.Network != nil {
+			intfType = "Network"
+			intfTypeNmae = intf.Source.Network.Network
+		} else if intf.Source.Bridge != nil {
+			intfType = "Bridge"
+			intfTypeNmae = intf.Source.Bridge.Bridge
+		}
+		if intf.Target != nil {
+			intfTargetDev = intf.Target.Dev
+		}
+		i := map[string]string{
+			"mac":    intf.MAC.Address, //"mac": intf.MAC.Address[9:],
+			"name":   intfTypeNmae,
+			"type":   intfType,
+			"target": intfTargetDev,
+		}
+		intfs = append(intfs, i)
+	}
+	d.Interfaces = intfs
+
+	// parser metadata from desc
+	d.Metadata = parserDescription(domaincfg.Description)
+
+	return d
 }
 
 func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
