@@ -58,6 +58,12 @@ https://pkg.go.dev/libvirt.org/go/libvirtxml
 https://www.cyberciti.biz/faq/how-to-add-disk-image-to-kvm-virtual-machine-with-virsh-command/
 ```
 
+```
+https://access.redhat.com/documentation/zh-tw/red_hat_enterprise_linux/6/html/virtualization_administration_guide/sect-virtualization-storage_pools-creating-local_directories-virsh#doc-wrapper
+https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_deployment_and_administration_guide/sect-managing_guest_virtual_machines_with_virsh-storage_pool_commands
+https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/virtualization_deployment_and_administration_guide/sect-managing_guest_virtual_machines_with_virsh-storage_pool_commands#sect-virsh-pool-list
+```
+
 
 #### KB
 Before using libvirtxml, I use "gopkg.in/xmlpath.v2" to parser XML.

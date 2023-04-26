@@ -105,10 +105,7 @@ func GetStoragePool(poolName string) StoragePool {
 }
 
 func CreateStoragePool(poolName, poolPath string) bool {
-	if Debug == true {
-		log.Println("  - virsh", "pool-create-as", "--type", "dir", "--name", poolName, "--target", poolPath)
-	}
-	_, err := RunVirsh("pool-create-as", "--type", "dir",
+	_, err := RunCommand("virsh", "pool-create-as", "--type", "dir",
 		"--name", poolName, "--target", poolPath)
 	if err != nil {
 		return false

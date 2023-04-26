@@ -146,7 +146,6 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("Error: %s", err)
 	} else {
-
 		var ret bool
 		var errStatus, strGroupID, group string
 		var originalDomainName, newDomainNamePrefix, newDomainName string
@@ -228,7 +227,15 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 				}
 				log.Printf("Clone new domain %s successfully", newDomainName)
 
-				// todo: update group in description
+				// update description
+				desc := "original_domain="+newDomainName
+				ret = mod.SetDomainDesc(newDomainName, desc)
+				if ret != true {
+					errStatus := "fail to set description"
+					log.Printf("Error: %s", errStatus)
+					domainCloneResult[newDomainName] = errStatus
+					continue
+				}
 
 				// set vcpu
 				vcpu := r.PostFormValue(group + "vcpu")

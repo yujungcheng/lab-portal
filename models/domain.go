@@ -248,7 +248,6 @@ func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
 				log.Printf("Error: fail to get network/bridge nmae for %s", domain.Name)
 				groupName = "default"
 			}
-
 		}
 		log.Printf("  - Set '%s' as group name for %s", groupName, domain.Name)
 		result[groupName] = append(result[groupName], domain)
@@ -257,28 +256,25 @@ func GetAllDomainsByGroup(flag, groupBy string) map[string][]Domain {
 }
 
 func CloneDomain(orgDomainName, newDomainName, newDomainDiskFile string) bool {
-	if Debug == true {
-		log.Println("  - virt-clone", "--quiet", "--original", orgDomainName, "--name", newDomainName, "--file", newDomainDiskFile)
-	}
 	args := []string{"--quiet", "--original", orgDomainName, "--name", newDomainName, "--file", newDomainDiskFile}
 	_, err := RunCommand("virt-clone", args...)
 	if err != nil {
 		return false
 	} else {
-		// overwrite description, todo: move to a function
-		_, err = RunVirsh("desc", newDomainName, "original domain", orgDomainName)
-		if err != nil {
-			return false
-		}
 		return true
 	}
 }
 
-func SetDomainvCPU(domainName, vcpuNumber string) bool {
-	if Debug == true {
-		log.Println("  - virsh", "setvcpus", "--current", domainName, vcpuNumber)
+func SetDomainDesc(domainName, domainDesc string) bool {
+	_, err := RunCommand("virsh", "desc", domainName, domainDesc)
+	if err != nil {
+		return false
 	}
-	_, err := RunVirsh("setvcpus", "--current", domainName, vcpuNumber)
+	return true
+}
+
+func SetDomainvCPU(domainName, vcpuNumber string) bool {
+	_, err := RunCommand("virsh", "setvcpus", "--current", domainName, vcpuNumber)
 	if err != nil {
 		return false
 	} else {
@@ -290,10 +286,7 @@ func SetDomainMEM(domainName, ramSize string) bool {
 	intSize, _ := strconv.Atoi(ramSize)
 	kbSize := intSize * 1024 * 1024 // convert ramSize GB to KB
 	strSize := strconv.Itoa(kbSize)
-	if Debug == true {
-		log.Println("  - virsh", "setmem", "--current", domainName, strSize)
-	}
-	_, err := RunVirsh("setmem", "--current", domainName, strSize)
+	_, err := RunCommand("virsh", "setmem", "--current", domainName, strSize)
 	if err != nil {
 		return false
 	} else {
@@ -303,10 +296,7 @@ func SetDomainMEM(domainName, ramSize string) bool {
 
 // this should move to volume.go
 func CreateDomainDisk(diskPoolName, diskName, diskSize string) bool {
-	if Debug == true {
-		log.Println("  - virsh", "vol-create-as", "--format", "qcow2", "--prealloc-metadata", "--pool", diskPoolName, "--name", diskName, "--capacity", diskSize)
-	}
-	_, err := RunVirsh("vol-create-as", "--format", "qcow2", "--prealloc-metadata",
+	_, err := RunCommand("virsh", "vol-create-as", "--format", "qcow2", "--prealloc-metadata",
 		"--pool", diskPoolName, "--name", diskName, "--capacity", diskSize)
 	if err != nil {
 		return false
@@ -316,11 +306,7 @@ func CreateDomainDisk(diskPoolName, diskName, diskSize string) bool {
 }
 
 func AttachDomainDisk(domainName, diskPath, diskTarget, diskTargetBus, diskDriverType string) bool {
-
-	if Debug == true {
-		log.Println("  - virsh", "attach-disk", "--persistent", domainName, "--source", diskPath, "--target", diskTarget, "--subdriver", diskDriverType, "--targetbus", diskTargetBus)
-	}
-	_, err := RunVirsh("attach-disk", "--persistent", domainName,
+	_, err := RunCommand("virsh", "attach-disk", "--persistent", domainName,
 		"--source", diskPath, "--target", diskTarget, "--subdriver", diskDriverType, "--targetbus", diskTargetBus)
 	if err != nil {
 		return false
@@ -332,16 +318,10 @@ func AttachDomainDisk(domainName, diskPath, diskTarget, diskTargetBus, diskDrive
 func DetachDomainInterface(domainName, interfaceMac string) bool {
 	var err error // err := error(nil)
 	if interfaceMac != "" {
-		if Debug == true {
-			log.Println("  - virsh", "detach-interface", "--persistent", "--type", "network", "--domain", domainName, "--mac", interfaceMac)
-		}
-		_, err = RunVirsh("detach-interface", "--persistent", "--type", "network",
+		_, err = RunCommand("virsh", "detach-interface", "--persistent", "--type", "network",
 			"--domain", domainName, "--mac", interfaceMac)
 	} else {
-		if Debug == true {
-			log.Println("  - virsh", "detach-interface", "--persistent", "--type", "network", "--domain", domainName)
-		}
-		_, err = RunVirsh("detach-interface", "--persistent", "--type", "network",
+		_, err = RunCommand("virsh", "detach-interface", "--persistent", "--type", "network",
 			"--domain", domainName)
 	}
 	if err != nil {
@@ -352,10 +332,7 @@ func DetachDomainInterface(domainName, interfaceMac string) bool {
 }
 
 func AttachDomainInterface(domainName, intfDriver, networkName string) bool {
-	if Debug == true {
-		log.Println("  - virsh", "attach-interface", "--persistent", "--type", "network", "--domain", domainName, "--model", intfDriver, "--source", networkName)
-	}
-	_, err := RunVirsh("attach-interface", "--persistent", "--type", "network",
+	_, err := RunCommand("virsh", "attach-interface", "--persistent", "--type", "network",
 		"--domain", domainName, "--model", intfDriver, "--source", networkName)
 	if err != nil {
 		return false

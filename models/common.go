@@ -109,32 +109,19 @@ func ConvertNetmaskToNumber(mask string) int {
 	return sz
 }
 
-func RunVirsh(args ...string) (string, error) {
-	// todo: log command if debug true
-
-	c := exec.Command("virsh", args...)
-	out, err := c.Output()
-	/*
-		if err != nil {
-			log.Printf("    RunVirsh Error: %s", err)
-		} else {
-			log.Printf("    RunVirsh Output: %s", out)
-		}
-	*/
-	return string(out), err
-}
-
 func RunCommand(cmd string, args ...string) (string, error) {
-	// todo: log command if debug true
-
+	if Debug == true {
+		strArgs := strings.Join(args, " ")
+		log.Println("  $", cmd, strArgs)
+	}
 	c := exec.Command(cmd, args...)
 	out, err := c.Output()
 	/*
-		if err != nil {
-			log.Printf("    RunCommand Error: %s", err)
-		} else {
-			log.Printf("    RunCommand Output: %s", out)
-		}
+	if err != nil {
+		log.Printf("  Error: %s", err)
+	} else {
+		log.Printf("  Output: %s", out)
+	}
 	*/
 	return string(out), err
 }
