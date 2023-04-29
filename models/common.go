@@ -100,7 +100,25 @@ func ConvertSizeToString(size uint64, unit string) string {
 	default:
 		newSize = size / 1024
 	}
-	return strconv.FormatUint(newSize, 10) + unit
+	return strconv.FormatUint(newSize, 10)
+}
+
+func RevertSizeString(size string) uint64 {
+	var newSize int64
+	unit := size[len(size)-2:]
+	valueStr := size[:len(size)-2]
+	value, _ := strconv.ParseInt(valueStr, 10, 64)
+	switch unit {
+	case "KB":
+		newSize = value * 1024
+	case "MB":
+		newSize = value * 1048576
+	case "GB":
+		newSize = value * 1073741824
+	default:
+		newSize = value * 1024
+	}
+	return uint64(newSize)
 }
 
 func ConvertNetmaskToNumber(mask string) int {

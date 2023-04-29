@@ -265,6 +265,14 @@ func CloneDomain(orgDomainName, newDomainName, newDomainDiskFile string) bool {
 	}
 }
 
+func SetDomainName(domainName, newDomainName string) bool {
+	_, err := RunCommand("virsh", "domrename", "--domain", domainName, "--new-name", newDomainName)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func SetDomainDesc(domainName, domainDesc string) bool {
 	_, err := RunCommand("virsh", "desc", domainName, domainDesc)
 	if err != nil {
@@ -274,24 +282,30 @@ func SetDomainDesc(domainName, domainDesc string) bool {
 }
 
 func SetDomainvCPU(domainName, vcpuNumber string) bool {
-	_, err := RunCommand("virsh", "setvcpus", "--current", domainName, vcpuNumber)
+	_, err := RunCommand("virsh", "setvcpus", "--config", "--domain", domainName, "--count", vcpuNumber, "--maximum")
 	if err != nil {
 		return false
-	} else {
-		return true
 	}
+	_, err = RunCommand("virsh", "setvcpus", "--config", "--domain", domainName, "--count", vcpuNumber)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 func SetDomainMEM(domainName, ramSize string) bool {
 	intSize, _ := strconv.Atoi(ramSize)
 	kbSize := intSize * 1024 * 1024 // convert ramSize GB to KB
 	strSize := strconv.Itoa(kbSize)
-	_, err := RunCommand("virsh", "setmem", "--current", domainName, strSize)
+	_, err := RunCommand("virsh", "setmaxmem", "--config", "--domain", domainName, "--size", strSize)
 	if err != nil {
 		return false
-	} else {
-		return true
 	}
+	_, err = RunCommand("virsh", "setmem", "--config", domainName, strSize)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // this should move to volume.go
@@ -300,9 +314,8 @@ func CreateDomainDisk(diskPoolName, diskName, diskSize string) bool {
 		"--pool", diskPoolName, "--name", diskName, "--capacity", diskSize)
 	if err != nil {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func AttachDomainDisk(domainName, diskPath, diskTarget, diskTargetBus, diskDriverType string) bool {
@@ -310,9 +323,8 @@ func AttachDomainDisk(domainName, diskPath, diskTarget, diskTargetBus, diskDrive
 		"--source", diskPath, "--target", diskTarget, "--subdriver", diskDriverType, "--targetbus", diskTargetBus)
 	if err != nil {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func DetachDomainInterface(domainName, interfaceMac string) bool {
@@ -326,9 +338,8 @@ func DetachDomainInterface(domainName, interfaceMac string) bool {
 	}
 	if err != nil {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func AttachDomainInterface(domainName, intfDriver, networkName string) bool {
@@ -336,7 +347,6 @@ func AttachDomainInterface(domainName, intfDriver, networkName string) bool {
 		"--domain", domainName, "--model", intfDriver, "--source", networkName)
 	if err != nil {
 		return false
-	} else {
-		return true
 	}
+	return true
 }

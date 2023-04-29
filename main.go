@@ -32,12 +32,10 @@ func main() {
 	mux.HandleFunc("/domains/clone-page", domainCtl.GetClonePage)
 	mux.HandleFunc("/domains/clone", domainCtl.Clone)
 
-	/*
-		mux.HandleFunc("/domains/delete-page", domainCtl.GetDeletePage)
-		mux.HandleFunc("/domains/delete", domainCtl.Delete)
-		mux.HandleFunc("/domains/update-page", domainCtl.GetUpdatePage)
-		mux.HandleFunc("/domains/update", domainCtl.Update)
+	mux.HandleFunc("/domains/show", domainCtl.Show)
+	mux.HandleFunc("/domains/update", domainCtl.Update)
 
+	/*
 		mux.HandleFunc("/storagePool/list", poolCtl.List)
 		mux.HandleFunc("/network/list", networkCtl.List)
 	*/

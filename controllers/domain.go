@@ -137,7 +137,7 @@ func (d DomainController) GetClonePage(w http.ResponseWriter, r *http.Request) {
 func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 	log.Println("Controller - clone domains")
 
-	const maxDomainGroupCount = 1
+	const maxDomainGroupCount = 2
 	const maxInterfaceCount = 3
 	const maxDiskCount = 3
 
@@ -344,17 +344,90 @@ func (d DomainController) Clone(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (d DomainController) Show(w http.ResponseWriter, r *http.Request) {
+	domainUUID := r.URL.Query().Get("uuid")
+	log.Printf("Controller - show domain %s", domainUUID)
+
+	domain, err := mod.GetDomainByUUID(domainUUID)
+    if err != nil {
+		log.Printf("Error: %s", err)
+	}
+	tplFiles := []string{
+		"templates/portal.tpl",
+		"templates/base.tpl",
+		"templates/domain_show_page.tpl",
+	}
+	tpl, err := template.ParseFiles(tplFiles...)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", 500)
+	}
+	err = tpl.Execute(w, domain)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", 500)
+	}
+}
+
 func (d DomainController) Delete(w http.ResponseWriter, r *http.Request) {
 	domainUUID := r.URL.Query().Get("uuid")
-	log.Printf("Delete domain %s", domainUUID)
+	log.Printf("Controller - delete domain %s", domainUUID)
 }
 
 func (d DomainController) Update(w http.ResponseWriter, r *http.Request) {
 	domainUUID := r.URL.Query().Get("uuid")
-	log.Printf("Update domain %s", domainUUID)
+	log.Printf("Controller - update domain %s", domainUUID)
+
+	var ret bool
+
+	domainName := r.PostFormValue("domainName")
+	domainVcpu := r.PostFormValue("domainVcpu")
+	domainMem := r.PostFormValue("domainMem")
+	newDomainName := r.PostFormValue("newDomainName")
+	newDomainVcpu := r.PostFormValue("newDomainVcpu")
+	newDomainMem := r.PostFormValue("newDomainMem")
+	
+	if domainName != newDomainName {
+		ret = mod.SetDomainName(domainName, newDomainName)
+		if ret != true {
+			log.Printf("Error: fail to update domain name to %s", newDomainName)
+		}
+	}
+	if domainVcpu != newDomainVcpu {
+		ret = mod.SetDomainvCPU(domainName, newDomainVcpu)
+		if ret != true {
+			log.Printf("Error: fail to update vcpu to %s", newDomainVcpu)
+		}
+	}
+	if domainMem != newDomainMem {
+		ret = mod.SetDomainMEM(domainName, newDomainMem)
+		if ret != true {
+			log.Printf("Error: fail to update memory to %s", newDomainMem)
+		}
+	}
+
+	domain, err := mod.GetDomainByUUID(domainUUID)
+    if err != nil {
+		log.Printf("Error: %s", err)
+	}
+	tplFiles := []string{
+		"templates/portal.tpl",
+		"templates/base.tpl",
+		"templates/domain_show_page.tpl",
+	}
+	tpl, err := template.ParseFiles(tplFiles...)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", 500)
+	}
+	err = tpl.Execute(w, domain)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal Server Error", 500)
+	}
 }
 
 func (d DomainController) Backup(w http.ResponseWriter, r *http.Request) {
 	domainUUID := r.URL.Query().Get("uuid")
-	log.Printf("Backup domain %s", domainUUID)
+	log.Printf("Controller - backup domain %s", domainUUID)
 }

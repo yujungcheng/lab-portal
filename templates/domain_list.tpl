@@ -32,7 +32,7 @@
         </td>
         <td>{{ .StateStr }}</td>
         <td>{{ .Vcpu }}</td>
-        <td>{{ .MemoryStr }}</td>
+        <td>{{ .MemoryStr }}GB</td>
 
         <td>
             {{ range $key, $value := .Disks }}
